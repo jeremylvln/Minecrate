@@ -1,0 +1,19 @@
+[package]
+name = "minecrate-network"
+version = "0.1.0"
+authors = ["Jérémy Levilain <jeremy.levilain@epitech.eu>"]
+edition = "2018"
+
+[lib]
+name = "network"
+
+[dependencies]
+minecrate-common = { path = "../common" }
+byteorder = "1"
+uuid = "0.8.1"
+log = "0.4.8"
+openssl = "0.10.27"
+rand = "0.7.3"
+reqwest = { version = "0.10.1", features = ["blocking"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"

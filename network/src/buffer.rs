@@ -1,0 +1,429 @@
+use std::str;
+use std::io::{Cursor, Write};
+use std::io;
+use std::ops::RangeBounds;
+use std::fmt;
+use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
+use uuid::Uuid;
+
+use common::vector::Vector3i;
+
+pub struct Buffer {
+    inner: Vec<u8>,
+    cursor: usize,
+}
+
+impl<'a> Extend<&'a u8> for Buffer {
+    fn extend<I: IntoIterator<Item = &'a u8>>(&mut self, iter: I) {
+        self.inner.extend(iter);
+    }
+}
+
+impl fmt::Debug for Buffer {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self.inner)
+    }
+}
+
+impl Buffer {
+    pub fn new() -> Buffer {
+        Buffer {
+            inner: vec![],
+            cursor: 0,
+        }
+    }
+
+    pub fn drain<R: RangeBounds<usize>>(&mut self, range: R) -> std::vec::Drain<'_, u8> {
+        self.inner.drain(range)
+    }
+
+    pub fn reset_cursor(&mut self) {
+        self.cursor = 0;
+    }
+
+    pub fn cursor(&self) -> usize {
+        self.cursor
+    }
+
+    pub fn len(&self) -> usize {
+        self.inner.len()
+    }
+
+    pub fn has_at_least(&self, count: usize) -> bool {
+        self.inner.len() - self.cursor >= count
+    }
+
+    pub fn as_raw(&self) -> &[u8] {
+        &self.inner
+    }
+
+    #[allow(dead_code)]
+    pub fn read_bool(&mut self) -> io::Result<bool> {
+        Ok(self.read_byte()? == 1)
+    }
+
+    #[allow(dead_code)]
+    pub fn write_bool(&mut self, value: &bool) -> io::Result<()> {
+        self.write_byte(if *value { &0x1 } else { &0x0 })
+    }
+
+    #[allow(dead_code)]
+    pub fn read_byte(&mut self) -> io::Result<i8> {
+        let mut rdr = Cursor::new(&self.inner[self.cursor..]);
+        let value = rdr.read_i8()?;
+        self.cursor += 1;
+        Ok(value)
+    }
+
+    #[allow(dead_code)]
+    pub fn write_byte(&mut self, value: &i8) -> io::Result<()> {
+        self.inner.write_i8(*value)?;
+        Ok(())
+    }
+
+    #[allow(dead_code)]
+    pub fn read_ubyte(&mut self) -> io::Result<u8> {
+        let mut rdr = Cursor::new(&self.inner[self.cursor..]);
+        let value = rdr.read_u8()?;
+        self.cursor += 1;
+        Ok(value)
+    }
+
+    #[allow(dead_code)]
+    pub fn write_ubyte(&mut self, value: &u8) -> io::Result<()> {
+        self.inner.write_u8(*value)?;
+        Ok(())
+    }
+
+    #[allow(dead_code)]
+    pub fn read_short(&mut self) -> io::Result<i16> {
+        let mut rdr = Cursor::new(&self.inner[self.cursor..]);
+        let value = rdr.read_i16::<BigEndian>()?;
+        self.cursor += 2;
+        Ok(value)
+    }
+
+    #[allow(dead_code)]
+    pub fn write_short(&mut self, value: &i16) -> io::Result<()> {
+        self.inner.write_i16::<BigEndian>(*value)?;
+        Ok(())
+    }
+
+    #[allow(dead_code)]
+    pub fn read_ushort(&mut self) -> io::Result<u16> {
+        let mut rdr = Cursor::new(&self.inner[self.cursor..]);
+        let value = rdr.read_u16::<BigEndian>()?;
+        self.cursor += 2;
+        Ok(value)
+    }
+
+    #[allow(dead_code)]
+    pub fn write_ushort(&mut self, value: &u16) -> io::Result<()> {
+        self.inner.write_u16::<BigEndian>(*value)?;
+        Ok(())
+    }
+
+    #[allow(dead_code)]
+    pub fn read_int(&mut self) -> io::Result<i32> {
+        let mut rdr = Cursor::new(&self.inner[self.cursor..]);
+        let value = rdr.read_i32::<BigEndian>()?;
+        self.cursor += 4;
+        Ok(value)
+    }
+
+    #[allow(dead_code)]
+    pub fn write_int(&mut self, value: &i32) -> io::Result<()> {
+        self.inner.write_i32::<BigEndian>(*value)?;
+        Ok(())
+    }
+
+    #[allow(dead_code)]
+    pub fn read_uint(&mut self) -> io::Result<u32> {
+        let mut rdr = Cursor::new(&self.inner[self.cursor..]);
+        let value = rdr.read_u32::<BigEndian>()?;
+        self.cursor += 4;
+        Ok(value)
+    }
+
+    #[allow(dead_code)]
+    pub fn write_uint(&mut self, value: &u16) -> io::Result<()> {
+        self.inner.write_u16::<BigEndian>(*value)?;
+        Ok(())
+    }
+
+    #[allow(dead_code)]
+    pub fn read_long(&mut self) -> io::Result<i64> {
+        let mut rdr = Cursor::new(&self.inner[self.cursor..]);
+        let value = rdr.read_i64::<BigEndian>()?;
+        self.cursor += 8;
+        Ok(value)
+    }
+
+    #[allow(dead_code)]
+    pub fn write_long(&mut self, value: &i64) -> io::Result<()> {
+        self.inner.write_i64::<BigEndian>(*value)?;
+        Ok(())
+    }
+
+    #[allow(dead_code)]
+    pub fn read_ulong(&mut self) -> io::Result<u64> {
+        let mut rdr = Cursor::new(&self.inner[self.cursor..]);
+        let value = rdr.read_u64::<BigEndian>()?;
+        self.cursor += 8;
+        Ok(value)
+    }
+
+    #[allow(dead_code)]
+    pub fn write_ulong(&mut self, value: &u64) -> io::Result<()> {
+        self.inner.write_u64::<BigEndian>(*value)?;
+        Ok(())
+    }
+
+    #[allow(dead_code)]
+    pub fn read_float(&mut self) -> io::Result<f32> {
+        let mut rdr = Cursor::new(&self.inner[self.cursor..]);
+        let value = rdr.read_f32::<BigEndian>()?;
+        self.cursor += 4;
+        Ok(value)
+    }
+
+    #[allow(dead_code)]
+    pub fn write_float(&mut self, value: &f32) -> io::Result<()> {
+        self.inner.write_f32::<BigEndian>(*value)?;
+        Ok(())
+    }
+
+    #[allow(dead_code)]
+    pub fn read_double(&mut self) -> io::Result<f64> {
+        let mut rdr = Cursor::new(&self.inner[self.cursor..]);
+        let value = rdr.read_f64::<BigEndian>()?;
+        self.cursor += 8;
+        Ok(value)
+    }
+
+    #[allow(dead_code)]
+    pub fn write_double(&mut self, value: &f64) -> io::Result<()> {
+        self.inner.write_f64::<BigEndian>(*value)?;
+        Ok(())
+    }
+
+    #[allow(dead_code)]
+    pub fn read_string(&mut self) -> io::Result<String> {
+        let len = self.read_varint()? as usize;
+        
+        if !self.has_at_least(len) {
+            Err(io::Error::new(
+                io::ErrorKind::Other,
+                format!("Failed to read a string of length {} from stream", len)
+            ))
+        } else {
+            let tmp = self.inner[self.cursor..self.cursor + len].to_vec();
+            match str::from_utf8(&tmp) {
+                Ok(value) => {
+                    self.cursor += len;
+                    Ok(String::from(value))
+                },
+                Err(_) => Err(io::Error::new(
+                    io::ErrorKind::Other, "Failed to read an UTF-8 string"
+                ))
+            }
+        }
+    }
+
+    #[allow(dead_code)]
+    pub fn write_string(&mut self, value: &str) -> io::Result<()> {
+        self.write_varint(&(value.len() as i32))?;
+        self.inner.write_all(value.as_bytes())?;
+        Ok(())
+    }
+
+    #[allow(dead_code)]
+    pub fn read_varint(&mut self) -> io::Result<i32> {
+        let mut result = 0;
+        let msb: u8 = 0b10000000;
+        let mask: u8 = !msb;
+    
+        for i in 0..5 {
+            let read = self.read_ubyte()?;
+            result |= ((read & mask) as i32) << (7 * i);
+
+            if i == 4 && (read & 0xf0 != 0) {
+                return Err(io::Error::new(io::ErrorKind::InvalidData, "VarInt is too big"));
+            }
+    
+            if (read & msb) == 0 {
+                return Ok(result);
+            }
+        }
+        Err(io::Error::new(io::ErrorKind::InvalidData, "Loop ended"))
+    }
+
+    #[allow(dead_code)]
+    pub fn write_varint(&mut self, value: &i32) -> io::Result<()> {
+        let msb: u8 = 0b10000000;
+        let mask: i32 = 0b01111111;
+
+        let mut value = *value;
+        for _ in 0..5 {
+            let tmp = (value & mask) as u8;
+            value &= !mask;
+            value = value.rotate_right(7);
+
+            if value != 0 {
+                self.inner.write_all(&[tmp | msb])?;
+            } else {
+                self.inner.write_all(&[tmp])?;
+                return Ok(());
+            }
+        }
+        Err(io::Error::new(io::ErrorKind::InvalidData, "Loop ended"))
+    }
+
+    #[allow(dead_code)]
+    pub fn read_varlong(&mut self) -> io::Result<i64> {
+        let mut result = 0;
+
+        let msb: u8 = 0b10000000;
+        let mask: u8 = !msb;
+    
+        for i in 0..10 {
+            let read = self.read_ubyte()?;    
+            result |= ((read & mask) as i64) << (7 * i);
+
+            if i == 9 && ((read & (!0x1)) != 0) {
+                return Err(io::Error::new(io::ErrorKind::InvalidData, "VarLong is too big"));
+            }
+    
+            if (read & msb) == 0 {
+                return Ok(result);
+            }
+        }
+        Err(io::Error::new(io::ErrorKind::InvalidData, "Loop ended"))
+    }
+
+    #[allow(dead_code)]
+    pub fn write_varlong(&mut self, value: &i64) -> io::Result<()> {
+        let msb: u8 = 0b10000000;
+        let mask: i64 = 0b01111111;
+
+        let mut value = *value;
+        for _ in 0..10 {
+            let tmp = (value & mask) as u8;
+            value &= !mask;
+            value = value.rotate_right(7);
+
+            if value != 0 {
+                self.inner.write_all(&[tmp | msb])?;
+            } else {
+                self.inner.write_all(&[tmp])?;
+                return Ok(());
+            }
+        }
+        Err(io::Error::new(io::ErrorKind::InvalidData, "Loop ended"))
+    }
+
+    #[allow(dead_code)]
+    pub fn read_position(&mut self) -> io::Result<Vector3i> {
+        let value = self.read_ulong()?;
+        let mut x = (value >> 38) as i32;
+        let mut y = ((value >> 26) & 0xfff) as i32;
+        let mut z = (value << 38 >> 38) as i32;
+
+        if x >= 1 << 25 {
+            x -= 1 << 26;
+        }
+        if y >= 1 << 11 {
+            y -= 1 << 12;
+        }
+        if z >= 1 << 25 {
+            z -= 1 << 26;
+        }
+        Ok(Vector3i::new(x, y, z))
+    }
+
+    #[allow(dead_code)]
+    pub fn write_position(&mut self, value: &Vector3i) -> io::Result<()> {
+        let x = if value.0 >= 0 {
+            value.0 as u64
+        } else {
+            (value.0 + (1 << 26)) as u64
+        };
+
+        let y = if value.1 >= 0 {
+            value.1 as u64
+        } else {
+            (value.1 + (1 << 12)) as u64
+        };
+
+        let z = if value.2 >= 0 {
+            value.2 as u64
+        } else {
+            (value.2 + (1 << 26)) as u64
+        };
+
+        if x & (!0x3ffffff) != 0 {
+            Err(io::Error::new(io::ErrorKind::InvalidData, "X is out of range"))
+        } else if y & (!0xfff) != 0 {
+            Err(io::Error::new(io::ErrorKind::InvalidData, "Y is out of range"))
+        } else if z & (!0x3ffffff) != 0 {
+            Err(io::Error::new(io::ErrorKind::InvalidData, "Z is out of range"))
+        } else {
+            let encoded = ((x & 0x3ffffff) << 38) | ((y & 0xfff) << 26) | (z & 0x3ffffff);
+            self.write_ulong(&encoded)
+        }
+    }
+
+    #[allow(dead_code)]
+    pub fn read_uuid(&mut self) -> io::Result<Uuid> {
+        let mut rdr = Cursor::new(&self.inner[self.cursor..]);
+        let value = rdr.read_u128::<BigEndian>()?;
+        self.cursor += 16;
+        Ok(Uuid::from_u128(value))
+    }
+
+    #[allow(dead_code)]
+    pub fn write_uuid(&mut self, value: &Uuid) -> io::Result<()> {
+        self.inner.write_u128::<BigEndian>(value.as_u128())?;
+        Ok(())
+    }
+
+    #[allow(dead_code)]
+    pub fn read_array<F, T>(&mut self, f: F, size: usize) -> io::Result<Vec<T>>
+        where F: Fn(&mut Buffer) -> io::Result<T> {
+        let mut vec = vec![];
+
+        for _ in 0..size {
+            vec.push(f(self)?);
+        }
+        Ok(vec)
+    }
+
+    #[allow(dead_code)]
+    pub fn write_array<'a, F, T>(&mut self, f: F, vec: &'a Vec<T>) -> io::Result<()>
+        where F: Fn(&mut Buffer, &'a T) -> io::Result<()> {
+        for i in 0..vec.len() {
+            f(self, &vec[i])?;
+        }
+        Ok(())
+    }
+
+    #[allow(dead_code)]
+    pub fn read_byte_array(&mut self, size: usize) -> io::Result<Vec<i8>> {
+        self.read_array(Buffer::read_byte, size)
+    }
+
+    #[allow(dead_code)]
+    pub fn write_byte_array<'a>(&mut self, vec: &'a Vec<i8>) -> io::Result<()> {
+        self.write_array(Buffer::write_byte, vec)
+    }
+
+    #[allow(dead_code)]
+    pub fn read_ubyte_array(&mut self, size: usize) -> io::Result<Vec<u8>> {
+        self.read_array(Buffer::read_ubyte, size)
+    }
+
+    #[allow(dead_code)]
+    pub fn write_ubyte_array<'a>(&mut self, vec: &'a Vec<u8>) -> io::Result<()> {
+        self.write_array(Buffer::write_ubyte, vec)
+    }
+}

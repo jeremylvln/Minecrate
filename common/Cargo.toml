@@ -1,0 +1,12 @@
+[package]
+name = "minecrate-common"
+version = "0.1.0"
+authors = ["Jérémy Levilain <jeremy.levilain@epitech.eu>"]
+edition = "2018"
+
+[lib]
+name = "common"
+
+[dependencies]
+num = "0.2.1"
+serde = { version = "1.0", features = ["derive"] }
