@@ -1,4 +1,5 @@
 use serde::{Serialize, Deserialize};
+use serde_json;
 
 use crate::chat_color::ChatColor;
 
@@ -7,7 +8,17 @@ fn def_none<T>() -> Option<T> { None }
 fn skip_false(value: &bool) -> bool { *value == false }
 fn skip_none<T>(value: &Option<T>) -> bool { value.is_none() }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum ChatMessageType {
+    Chat, System, GameInfo,
+}
+
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum ChatSetting {
+    Full, System, None,
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct ChatClickEvent {
     #[serde(default = "def_none")]
     #[serde(skip_serializing_if = "skip_none")]
@@ -37,7 +48,7 @@ impl ChatClickEvent {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct ChatHoverEvent {
     #[serde(default = "def_none")]
     #[serde(rename = "show_text")]
@@ -79,22 +90,22 @@ impl ChatHoverEvent {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct ChatComponentString {
     text: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct ChatComponentTranslation {
     translate: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct ChatComponentKeybind {
     keybind: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct ChatComponentScore {
     score: String,
     name: String,
@@ -102,79 +113,79 @@ pub struct ChatComponentScore {
     value: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct ChatComponentSelector {
     selector: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct Chat {
     #[serde(default = "def_false")]
     #[serde(skip_serializing_if = "skip_false")]
-    bold: bool,
+    pub bold: bool,
 
     #[serde(default = "def_false")]
     #[serde(skip_serializing_if = "skip_false")]
-    italic: bool,
+    pub italic: bool,
 
     #[serde(default = "def_false")]
     #[serde(skip_serializing_if = "skip_false")]
-    underlined: bool,
+    pub underlined: bool,
 
     #[serde(default = "def_false")]
     #[serde(skip_serializing_if = "skip_false")]
-    strikethrough: bool,
+    pub strikethrough: bool,
 
     #[serde(default = "def_false")]
     #[serde(skip_serializing_if = "skip_false")]
-    obfuscated: bool,
+    pub obfuscated: bool,
 
     #[serde(default = "def_none")]
     #[serde(skip_serializing_if = "skip_none")]
-    color: Option<ChatColor>,
+    pub color: Option<ChatColor>,
 
     #[serde(default = "def_none")]
     #[serde(skip_serializing_if = "skip_none")]
-    insertion: Option<String>,
+    pub insertion: Option<String>,
 
     #[serde(default = "def_none")]
     #[serde(rename = "clickEvent")]
     #[serde(skip_serializing_if = "skip_none")]
-    click_event: Option<ChatClickEvent>,
+    pub click_event: Option<ChatClickEvent>,
 
     #[serde(default = "def_none")]
     #[serde(rename = "hoverEvent")]
     #[serde(skip_serializing_if = "skip_none")]
-    hover_event: Option<ChatHoverEvent>,
+    pub hover_event: Option<ChatHoverEvent>,
 
     #[serde(default = "def_none")]
     #[serde(skip_serializing_if = "skip_none")]
-    extra: Option<Vec<Chat>>,
-
-    #[serde(flatten)]
-    #[serde(default = "def_none")]
-    #[serde(skip_serializing_if = "skip_none")]
-    component_string: Option<ChatComponentString>,
+    pub extra: Option<Vec<Chat>>,
 
     #[serde(flatten)]
     #[serde(default = "def_none")]
     #[serde(skip_serializing_if = "skip_none")]
-    component_translation: Option<ChatComponentTranslation>,
+    pub component_string: Option<ChatComponentString>,
 
     #[serde(flatten)]
     #[serde(default = "def_none")]
     #[serde(skip_serializing_if = "skip_none")]
-    component_keybind: Option<ChatComponentKeybind>,
+    pub component_translation: Option<ChatComponentTranslation>,
 
     #[serde(flatten)]
     #[serde(default = "def_none")]
     #[serde(skip_serializing_if = "skip_none")]
-    component_score: Option<ChatComponentScore>,
+    pub component_keybind: Option<ChatComponentKeybind>,
 
     #[serde(flatten)]
     #[serde(default = "def_none")]
     #[serde(skip_serializing_if = "skip_none")]
-    component_selector: Option<ChatComponentSelector>,
+    pub component_score: Option<ChatComponentScore>,
+
+    #[serde(flatten)]
+    #[serde(default = "def_none")]
+    #[serde(skip_serializing_if = "skip_none")]
+    pub component_selector: Option<ChatComponentSelector>,
 }
 
 impl Chat {
@@ -198,5 +209,13 @@ impl Chat {
             component_score: None,
             component_selector: None,
         }
+    }
+
+    pub fn from_string(text: &str) -> Result<Chat, serde_json::Error> {
+        serde_json::from_str(text)
+    }
+
+    pub fn to_string(&self) -> Result<String, serde_json::Error> {
+        serde_json::to_string(self)
     }
 }

@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum LevelType {
     Default, Flat, LargeBiomes, Amplified, Customized, Buffet, Default1_1
 }
@@ -29,3 +29,5 @@ impl LevelType {
         }
     }
 }
+
+impl Eq for LevelType {}

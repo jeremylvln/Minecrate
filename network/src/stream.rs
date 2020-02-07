@@ -59,6 +59,8 @@ impl Stream {
         final_out_buf.write_varint(&(out_buf.len() as i32))?;
         final_out_buf.extend(out_buf.as_raw());
 
+        println!("{:?}", final_out_buf);
+
         match &mut self.out_cipher {
             Some(cipher) => {
                 let mut tmp = vec![0; final_out_buf.len() + 16];
@@ -108,7 +110,6 @@ impl Stream {
         match self.handle.read(&mut tmp[..]) {
             Ok(count) if count > 0 => {
                 self.buf.extend(&tmp[..count]);
-                println!("+{} {:?}", count, self.buf);
                 Ok(())
             },
             Ok(_) => Ok(()),

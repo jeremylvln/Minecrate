@@ -2,7 +2,7 @@ use std::fmt;
 use serde::{Serialize, Serializer, Deserialize, Deserializer};
 use serde::de::{self, Visitor};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum ChatColor {
     Black, DarkBlue, DarkGreen, DarkCyan, DarkRed, Purple, Gold,
     Gray, DarkGray, Blue, BrightGreen, Cyan, Red, Pink, Yellow,
@@ -17,7 +17,7 @@ impl ChatColor {
             "dark_green" => Some(ChatColor::DarkGreen),
             "dark_cyan" => Some(ChatColor::DarkCyan),
             "dark_red" => Some(ChatColor::DarkRed),
-            "purple" => Some(ChatColor::Purple),
+            "dark_purple" => Some(ChatColor::Purple),
             "gold" => Some(ChatColor::Gold),
             "gray" => Some(ChatColor::Gray),
             "dark_gray" => Some(ChatColor::DarkGray),
@@ -72,7 +72,7 @@ impl ChatColor {
             &ChatColor::DarkGreen => "dark_green",
             &ChatColor::DarkCyan => "dark_cyan",
             &ChatColor::DarkRed => "dark_red",
-            &ChatColor::Purple => "purple",
+            &ChatColor::Purple => "dark_purple",
             &ChatColor::Gold => "gold",
             &ChatColor::Gray => "gray",
             &ChatColor::DarkGray => "dark_gray",

@@ -41,26 +41,54 @@ impl JoinGamePacket {
         })
     }
 
-    // pub fn deserialize(buffer: &mut Buffer) -> io::Result<ClientboundPacket> {
-    //     match Uuid::parse_str(&buffer.read_string()?) {
-    //         Ok(uuid) => Ok(ClientboundPacket::JoinGame(JoinGamePacket {
-    //             uuid,
-    //             username: buffer.read_string()?,
-    //         })),
-    //         Err(e) => Err(io::Error::new(io::ErrorKind::InvalidData, e))
-    //     }
-    // }
+    pub fn deserialize(buffer: &mut Buffer) -> io::Result<ClientboundPacket> {
+        let entity_id = buffer.read_int()?;
+        let mut gamemode_byte = buffer.read_ubyte()?;
+        let mut hardcore = false;
+
+        if gamemode_byte & (1 << 3) == 1 {
+            hardcore = true;
+            gamemode_byte ^= 0b00000100;
+        }
+
+        let dimension = Dimension::from_i32(&buffer.read_int()?);
+        let hashed_seed = buffer.read_long()?;
+        let max_players = buffer.read_ubyte()?;
+
+        match Gamemode::from_u8(&gamemode_byte) {
+            Some(gamemode) => {
+                match LevelType::from_string(&buffer.read_string()?) {
+                    Some(level_type) => {
+                        Ok(ClientboundPacket::JoinGame(JoinGamePacket {
+                            entity_id,
+                            gamemode,
+                            hardcore,
+                            dimension,
+                            hashed_seed,
+                            max_players,
+                            level_type,
+                            render_distance: buffer.read_varint()?,
+                            reduced_debug_info: buffer.read_bool()?,
+                            enable_respawn_screen: buffer.read_bool()?,
+                        }))
+                    },
+                    None => Err(io::Error::new(io::ErrorKind::InvalidData, "Unknown level type"))
+                }
+            }
+            None => Err(io::Error::new(io::ErrorKind::InvalidData, "Unknown gamemode"))
+        }
+    }
 
     pub fn serialize(&self, buffer: &mut Buffer) -> io::Result<()> {
         let mut final_gamemode = self.gamemode.to_u8();
 
         if self.hardcore {
-            final_gamemode &= 0b00000100;
+            final_gamemode |= 0b00000100;
         }
 
         buffer.write_int(&self.entity_id)?;
         buffer.write_ubyte(&final_gamemode)?;
-        buffer.write_int(&self.dimension.to_u8())?;
+        buffer.write_int(&self.dimension.to_i32())?;
         buffer.write_long(&self.hashed_seed)?;
         buffer.write_ubyte(&self.max_players)?;
         buffer.write_string(&self.level_type.to_string())?;

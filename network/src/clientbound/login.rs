@@ -1,8 +1,33 @@
 use std::io;
 use uuid::Uuid;
+use common::chat::Chat;
 
 use crate::clientbound::ClientboundPacket;
 use crate::buffer::Buffer;
+
+#[derive(Debug)]
+pub struct DisconnectPacket {
+    reason: Chat,
+}
+
+impl DisconnectPacket {
+    pub fn new(reason: Chat) -> ClientboundPacket {
+        ClientboundPacket::Disconnect(DisconnectPacket {
+            reason,
+        })
+    }
+
+    pub fn deserialize(buffer: &mut Buffer) -> io::Result<ClientboundPacket> {
+        Ok(ClientboundPacket::Disconnect(DisconnectPacket {
+            reason: buffer.read_chat()?,
+        }))
+    }
+
+    pub fn serialize(&self, buffer: &mut Buffer) -> io::Result<()> {
+        buffer.write_chat(&self.reason)?;
+        Ok(())
+    }
+}
 
 #[derive(Debug)]
 pub struct EncryptionRequestPacket {

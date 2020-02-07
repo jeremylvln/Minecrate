@@ -1,46 +1,36 @@
-use std::io;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use env_logger::Env;
-use common::chat::Chat;
-use network::connection::{self, ConnectionHandler};
-use network::clientbound;
-use network::serverbound::ServerboundPacket;
-use network::stream::Stream;
+use log::{info, warn};
+use ctrlc;
+use network::connection::ConnectionHandler;
+
+pub mod config;
+pub mod server;
+pub mod packet_consumers;
+
+use config::Config;
+use server::MinecraftServer;
 
 fn main() {
     println!("Welcome to Minecrate!");
     env_logger::from_env(Env::default().default_filter_or("info")).init();
     
+    info!("Loading configuration...");
+    let config = Config::from_path("server.toml").unwrap_or(Config::default());
+    let mut server = MinecraftServer::new(config);
     let mut connection = ConnectionHandler::new();
-    connection.listen("127.0.0.1", 25565, &packet_process)
-        .expect("Failed to start the server");
-}
+    let run = Arc::new(AtomicBool::new(true));
+    let run_cpy = run.clone();
 
-fn packet_process(stream: &mut Stream, packet: &ServerboundPacket) -> io::Result<()> {
-    match packet {
-        ServerboundPacket::StatusRequest(_) => {
-            let payload = clientbound::status::StatusResponsePayload {
-                version: clientbound::status::StatusResponsePayloadVersion {
-                    name: connection::PROTOCOL_NAME.to_string(),
-                    protocol: connection::PROTOCOL_VERSION,
-                },
-                players: clientbound::status::StatusResponsePayloadPlayers {
-                    max: 20,
-                    online: 0,
-                    sample: vec![],
-                },
-                description: Chat::new_text("Minecrate!!"),
-                favicon: "".to_string(),
-            };
-            let res = clientbound::status::StatusResponsePacket::new(payload);
+    ctrlc::set_handler(move || {
+        warn!("Received interruption signal...");
+        run_cpy.store(false, Ordering::SeqCst);
+    }).expect("Failed to set interrupt handler");
 
-            stream.send_packet(&res)?;
-            Ok(())
-        },
-        ServerboundPacket::Ping(ref x) => {
-            let res = clientbound::status::PongPacket::new(x.payload);
-            stream.send_packet(&res)?;
-            Ok(())
-        },
-        _ => Ok(())
-    }
+    connection.listen(run.clone(), &server.config.host.clone(), server.config.port, |stream, packet| {
+        packet_consumers::packet_process(&mut server, stream, packet)
+    }).expect("Failed to start the server");
+
+    println!("Goodbye!");
 }

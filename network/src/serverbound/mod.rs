@@ -28,7 +28,9 @@ impl Packet for ServerboundPacket {
         let packet_len = buffer.read_varint()?;
 
         if buffer.has_at_least(packet_len as usize) {
+            let cursor_before = buffer.cursor();
             let packet_id = buffer.read_varint()?;
+            let _payload_size = (packet_len as usize) - (buffer.cursor() - cursor_before);
 
             match state {
                 &State::Handshake => match packet_id {
@@ -56,9 +58,14 @@ impl Packet for ServerboundPacket {
 
     fn serialize(&self, buffer: &mut Buffer) -> io::Result<()> {
         match self {
+            // Handsha;e
             &ServerboundPacket::Handshake(ref x) => x.serialize(buffer),
+
+            // Status
             &ServerboundPacket::StatusRequest(ref x) => x.serialize(buffer),
             &ServerboundPacket::Ping(ref x) => x.serialize(buffer),
+
+            // Login
             &ServerboundPacket::LoginStart(ref x) => x.serialize(buffer),
             &ServerboundPacket::EncryptionResponse(ref x) => x.serialize(buffer),
         }
@@ -66,11 +73,31 @@ impl Packet for ServerboundPacket {
 
     fn get_id(&self) -> i32 {
         match self {
+            // Handshake
             &ServerboundPacket::Handshake(_) => 0x0,
+
+            // Status
             &ServerboundPacket::StatusRequest(_) => 0x0,
             &ServerboundPacket::Ping(_) => 0x1,
+
+            // Login
             &ServerboundPacket::LoginStart(_) => 0x0,
             &ServerboundPacket::EncryptionResponse(_) => 0x1,
+        }
+    }
+
+    fn get_state(&self) -> State {
+        match self {
+            // Handshake
+            &ServerboundPacket::Handshake(_) => State::Handshake,
+
+            // Status
+            &ServerboundPacket::StatusRequest(_) => State::Status,
+            &ServerboundPacket::Ping(_) => State::Status,
+
+            // Login
+            &ServerboundPacket::LoginStart(_) => State::Login,
+            &ServerboundPacket::EncryptionResponse(_) => State::Login,
         }
     }
 }

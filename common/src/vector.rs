@@ -2,14 +2,19 @@ use std::ops::{Add, Sub, Mul, Div};
 use num::Integer;
 
 #[allow(dead_code)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Vector2<T>(pub T, pub T);
+
 #[allow(dead_code)]
 pub type Vector2i = Vector2<i32>;
+
 #[allow(dead_code)]
 pub type Vector2u = Vector2<u32>;
 
 #[allow(dead_code)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Vector3<T>(pub T, pub T, pub T);
+
 #[allow(dead_code)]
 pub type Vector3i = Vector3<i32>;
 #[allow(dead_code)]

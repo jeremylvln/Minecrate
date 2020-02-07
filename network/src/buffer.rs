@@ -6,6 +6,7 @@ use std::fmt;
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use uuid::Uuid;
 
+use common::chat::Chat;
 use common::vector::Vector3i;
 
 pub struct Buffer {
@@ -425,5 +426,21 @@ impl Buffer {
     #[allow(dead_code)]
     pub fn write_ubyte_array<'a>(&mut self, vec: &'a Vec<u8>) -> io::Result<()> {
         self.write_array(Buffer::write_ubyte, vec)
+    }
+
+    #[allow(dead_code)]
+    pub fn read_chat(&mut self) -> io::Result<Chat> {
+        match Chat::from_string(&self.read_string()?) {
+            Ok(chat) => Ok(chat),
+            Err(err) => Err(io::Error::new(io::ErrorKind::InvalidData, err)),
+        }
+    }
+
+    #[allow(dead_code)]
+    pub fn write_chat(&mut self, chat: &Chat) -> io::Result<()> {
+        match chat.to_string() {
+            Ok(value) => self.write_string(&value),
+            Err(err) => Err(io::Error::new(io::ErrorKind::InvalidData, err)),
+        }
     }
 }

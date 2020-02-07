@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Gamemode {
     Survival, Creative, Adventure, Spectator
 }
@@ -19,7 +19,9 @@ impl Gamemode {
             &Gamemode::Survival => 0,
             &Gamemode::Creative => 1,
             &Gamemode::Adventure => 2,
-            &Gamemode::Spectator => 2,
+            &Gamemode::Spectator => 3,
         }
     }
 }
+
+impl Eq for Gamemode {}

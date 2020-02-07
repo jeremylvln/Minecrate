@@ -1,0 +1,11 @@
+[package]
+name = "minecrate-world"
+version = "0.1.0"
+authors = ["Jérémy Levilain <jeremy.levilain@epitech.eu>"]
+edition = "2018"
+
+[lib]
+name = "world"
+
+[dependencies]
+minecrate-common = { path = "../common" }

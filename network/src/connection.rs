@@ -1,10 +1,11 @@
 use std::net::TcpListener;
 use std::io;
 use std::sync::{Arc, Mutex};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::ops::DerefMut;
 use std::thread;
 use std::time::Duration;
-use log::{debug, error};
+use log::{debug, info, error};
 use openssl::rsa::Rsa;
 use openssl::pkey;
 use uuid::Uuid;
@@ -13,16 +14,13 @@ use crate::packet::State;
 use crate::stream::Stream;
 use crate::serverbound::ServerboundPacket;
 use crate::serverbound;
+use crate::clientbound::ClientboundPacket;
 use crate::clientbound;
 use crate::mojang;
 use crate::utils::{rsa_decrypt};
 
-use common::gamemode::Gamemode;
-use common::dimension::Dimension;
-use common::level_type::LevelType;
-
-pub const PROTOCOL_VERSION: i32 = 578;
-pub const PROTOCOL_NAME: &'static str = "1.15.2";
+pub const PROTOCOL_VERSION: i32 = 701;
+pub const PROTOCOL_NAME: &'static str = "20w06a";
 
 pub struct ConnectionHandler {
     streams: Arc<Mutex<Vec<Stream>>>,
@@ -32,6 +30,7 @@ pub struct ConnectionHandler {
 
 impl ConnectionHandler {
     pub fn new() -> Self {
+        info!("Generating key-pair...");
         let rsa = Rsa::generate(1024).unwrap();
         let rsa_pub_der = rsa.public_key_to_der().unwrap();
 
@@ -42,24 +41,37 @@ impl ConnectionHandler {
         }
     }
 
-    pub fn listen<F>(&mut self, host: &str, port: u16, cb: F) -> io::Result<()>
-        where F: Fn(&mut Stream, &ServerboundPacket) -> io::Result<()> {
+    pub fn listen<F>(&mut self, run: Arc<AtomicBool>, host: &str, port: u16, mut cb: F) -> io::Result<()>
+        where F: FnMut(&mut Stream, &ServerboundPacket) -> io::Result<()> {
+
+        let run_cpy = run.clone();
         thread::spawn({
             let listener = TcpListener::bind(format!("{}:{}", host, port))?;
-            let streams_cpy = Arc::clone(&self.streams);
+            listener.set_nonblocking(true)?;
 
-            move || {
+            let streams_cpy = Arc::clone(&self.streams);
+            info!("Listening on {}:{}.", host, port);
+
+            move || while run_cpy.load(Ordering::SeqCst) {
                 for stream in listener.incoming() {
-                    streams_cpy.lock().unwrap().push(
-                        Stream::new(
-                            stream.expect("Failed to open stream")
-                        ).expect("Failed to create a stream handle")
-                    );
+                    match stream {
+                        Ok(s) => {
+                            streams_cpy.lock().unwrap().push(
+                                Stream::new(s).expect("Failed to create a stream handle")
+                            );
+                        },
+                        Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => {
+                            continue;
+                        },
+                        Err(_) => {},
+                    }
                 }
+
+                std::thread::sleep(Duration::from_millis(50));
             }
         });
 
-        loop {
+        while run.load(Ordering::SeqCst) {
             {
                 let mut streams_lock = self.streams.lock().unwrap();
                 let streams_ref = streams_lock.deref_mut();
@@ -68,14 +80,20 @@ impl ConnectionHandler {
                 while i < streams_ref.len() {
                     let remove = match streams_ref[i].read_packet() {
                         Ok(packet) => {
-                            debug!("{:?}", packet);
+                            debug!("Received packet: {:?}.", packet);
                             match &packet {
-                                &ServerboundPacket::Handshake(ref p) =>
-                                    self.handle_handshake(&mut streams_ref[i], p)?,
-                                &ServerboundPacket::LoginStart(ref p) =>
-                                    self.handle_login_start(&mut streams_ref[i], p)?,
-                                &ServerboundPacket::EncryptionResponse(ref p) =>
-                                    self.handle_encryption_response(&mut streams_ref[i], p)?,
+                                &ServerboundPacket::Handshake(ref p) => {
+                                    self.handle_handshake(&mut streams_ref[i], p)?;
+                                    cb(&mut streams_ref[i], &packet)?
+                                },
+                                &ServerboundPacket::LoginStart(ref p) => {
+                                    self.handle_login_start(&mut streams_ref[i], p)?;
+                                    cb(&mut streams_ref[i], &packet)?
+                                },
+                                &ServerboundPacket::EncryptionResponse(ref p) => {
+                                    self.handle_encryption_response(&mut streams_ref[i], p)?;
+                                    cb(&mut streams_ref[i], &packet)?
+                                },
                                 _ => cb(&mut streams_ref[i], &packet)?,
                             }
                             false
@@ -97,6 +115,18 @@ impl ConnectionHandler {
 
             std::thread::sleep(Duration::from_millis(50));
         }
+
+        Ok(())
+    }
+
+    pub fn broadcast_packet(&mut self, packet: &ClientboundPacket) -> io::Result<()> {
+        let mut streams_lock = self.streams.lock().unwrap();
+        let streams_ref = streams_lock.deref_mut();
+
+        for stream in streams_ref {
+            stream.send_packet(packet)?;
+        }
+        Ok(())
     }
 
     fn handle_handshake(
@@ -133,10 +163,8 @@ impl ConnectionHandler {
     fn handle_encryption_response(
         &self, stream: &mut Stream, packet: &serverbound::login::EncryptionResponsePacket
     ) -> io::Result<()> {
-        let decrypted_shared = rsa_decrypt(&self.rsa, &packet.shared_secret)
-            .expect("TODO");
-        let decrypted_verify = rsa_decrypt(&self.rsa, &packet.verify_token)
-            .expect("TODO");
+        let decrypted_shared = rsa_decrypt(&self.rsa, &packet.shared_secret)?;
+        let decrypted_verify = rsa_decrypt(&self.rsa, &packet.verify_token)?;
 
         if decrypted_verify != stream.get_verify_challenge() {
             Err(io::Error::new(io::ErrorKind::InvalidData, "Failed to verify challenge"))
@@ -154,22 +182,6 @@ impl ConnectionHandler {
 
                     stream.send_packet(&res_login)?;
                     stream.set_state(State::Play);
-
-                    let res_join = clientbound::play::join_game::JoinGamePacket::new(
-                        0,
-                        Gamemode::Survival,
-                        false,
-                        Dimension::Overworld,
-                        0,
-                        0,
-                        LevelType::Default,
-                        32,
-                        false,
-                        true,
-                    );
-
-                    stream.send_packet(&res_join)?;
-
                     Ok(())
                 },
                 Err(e) => Err(io::Error::new(io::ErrorKind::InvalidData, e))
