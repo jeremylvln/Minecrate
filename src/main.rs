@@ -1,5 +1,6 @@
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::cell::RefCell;
 use env_logger::Env;
 use log::{info, warn};
 use ctrlc;
@@ -18,7 +19,7 @@ fn main() {
     
     info!("Loading configuration...");
     let config = Config::from_path("server.toml").unwrap_or(Config::default());
-    let mut server = MinecraftServer::new(config);
+    let server = RefCell::new(MinecraftServer::new(config));
     let mut connection = ConnectionHandler::new();
     let run = Arc::new(AtomicBool::new(true));
     let run_cpy = run.clone();
@@ -28,9 +29,15 @@ fn main() {
         run_cpy.store(false, Ordering::SeqCst);
     }).expect("Failed to set interrupt handler");
 
-    connection.listen(run.clone(), &server.config.host.clone(), server.config.port, |stream, packet| {
-        packet_consumers::packet_process(&mut server, stream, packet)
-    }).expect("Failed to start the server");
+    connection.listen(
+        run.clone(), &server.borrow().config.host.clone(), server.borrow().config.port,
+        || {
+            server.borrow_mut().tick();
+        },
+        |stream, packet| {
+            packet_consumers::packet_process(&mut server.borrow_mut(), stream, packet)
+        }
+    ).expect("Failed to start the server");
 
     println!("Goodbye!");
 }

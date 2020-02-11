@@ -9,12 +9,14 @@ members = [
     ".",
     "common",
     "network",
+    "entity",
     "world"
 ]
 
 [dependencies]
 minecrate-common = { path = "./common" }
 minecrate-network = { path = "./network" }
+minecrate-entity = { path = "./entity" }
 minecrate-world = { path = "./world" }
 log = "0.4.8"
 env_logger = "0.7.1"

@@ -1,0 +1,12 @@
+[package]
+name = "minecrate-entity"
+version = "0.1.0"
+authors = ["Jérémy Levilain <jeremy.levilain@epitech.eu>"]
+edition = "2018"
+
+[lib]
+name = "entity"
+
+[dependencies]
+minecrate-common = { path = "../common" }
+specs = { version = "0.15.1",  features = ["specs-derive"] }

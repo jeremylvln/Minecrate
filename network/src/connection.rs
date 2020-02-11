@@ -41,8 +41,11 @@ impl ConnectionHandler {
         }
     }
 
-    pub fn listen<F>(&mut self, run: Arc<AtomicBool>, host: &str, port: u16, mut cb: F) -> io::Result<()>
-        where F: FnMut(&mut Stream, &ServerboundPacket) -> io::Result<()> {
+    pub fn listen<T, P>(
+        &mut self, run: Arc<AtomicBool>, host: &str, port: u16,
+        mut tick_cb: T, mut packet_cb: P,
+    ) -> io::Result<()>
+        where T: FnMut(), P: FnMut(&mut Stream, &ServerboundPacket) -> io::Result<()> {
 
         let run_cpy = run.clone();
         thread::spawn({
@@ -84,17 +87,17 @@ impl ConnectionHandler {
                             match &packet {
                                 &ServerboundPacket::Handshake(ref p) => {
                                     self.handle_handshake(&mut streams_ref[i], p)?;
-                                    cb(&mut streams_ref[i], &packet)?
+                                    packet_cb(&mut streams_ref[i], &packet)?
                                 },
                                 &ServerboundPacket::LoginStart(ref p) => {
                                     self.handle_login_start(&mut streams_ref[i], p)?;
-                                    cb(&mut streams_ref[i], &packet)?
+                                    packet_cb(&mut streams_ref[i], &packet)?
                                 },
                                 &ServerboundPacket::EncryptionResponse(ref p) => {
                                     self.handle_encryption_response(&mut streams_ref[i], p)?;
-                                    cb(&mut streams_ref[i], &packet)?
+                                    packet_cb(&mut streams_ref[i], &packet)?
                                 },
-                                _ => cb(&mut streams_ref[i], &packet)?,
+                                _ => packet_cb(&mut streams_ref[i], &packet)?,
                             }
                             false
                         },
@@ -113,6 +116,7 @@ impl ConnectionHandler {
                 }
             }
 
+            tick_cb();
             std::thread::sleep(Duration::from_millis(50));
         }
 
