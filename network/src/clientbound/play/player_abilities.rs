@@ -49,9 +49,9 @@ impl PlayerAbilitiesPacket {
         if self.allow_flight { flags |= 0b00000100; }
         if self.instant_break { flags |= 0b00001000; }
 
-        buffer.write_byte(&flags)?;
-        buffer.write_float(&self.flying_speed)?;
-        buffer.write_float(&self.field_of_view_modifier)?;
+        buffer.write_byte(flags)?;
+        buffer.write_float(self.flying_speed)?;
+        buffer.write_float(self.field_of_view_modifier)?;
         Ok(())
     }
 }

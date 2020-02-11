@@ -45,9 +45,9 @@ impl EncryptionResponsePacket {
     }
 
     pub fn serialize(&self, buffer: &mut Buffer) -> io::Result<()> {
-        buffer.write_varint(&self.shared_secret_length)?;
+        buffer.write_varint(self.shared_secret_length)?;
         buffer.write_ubyte_array(&self.shared_secret)?;
-        buffer.write_varint(&self.verify_token_length)?;
+        buffer.write_varint(self.verify_token_length)?;
         buffer.write_ubyte_array(&self.verify_token)?;
         Ok(())
     }

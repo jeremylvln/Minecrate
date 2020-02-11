@@ -1,27 +1,32 @@
-#[derive(Debug, PartialEq, Clone, Copy)]
+use std::convert::From;
+use std::convert::TryFrom;
+
+#[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub enum Gamemode {
     Survival, Creative, Adventure, Spectator
 }
 
-impl Gamemode {
-    pub fn from_u8(value: &u8) -> Option<Self> {
+impl From<Gamemode> for u8 {
+    fn from(value: Gamemode) -> Self {
         match value {
-            0 => Some(Gamemode::Survival),
-            1 => Some(Gamemode::Creative),
-            2 => Some(Gamemode::Adventure),
-            3 => Some(Gamemode::Spectator),
-            _ => None
-        }
-    }
-
-    pub fn to_u8(&self) -> u8 {
-        match self {
-            &Gamemode::Survival => 0,
-            &Gamemode::Creative => 1,
-            &Gamemode::Adventure => 2,
-            &Gamemode::Spectator => 3,
+            Gamemode::Survival => 0,
+            Gamemode::Creative => 1,
+            Gamemode::Adventure => 2,
+            Gamemode::Spectator => 3,
         }
     }
 }
 
-impl Eq for Gamemode {}
+impl TryFrom<u8> for Gamemode {
+    type Error = &'static str;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(Gamemode::Survival),
+            1 => Ok(Gamemode::Creative),
+            2 => Ok(Gamemode::Adventure),
+            3 => Ok(Gamemode::Spectator),
+            _ => Err("Unknown Gamemode")
+        }
+    }
+}

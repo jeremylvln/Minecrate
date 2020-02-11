@@ -1,94 +1,99 @@
 use std::fmt;
+use std::str::FromStr;
 use serde::{Serialize, Serializer, Deserialize, Deserializer};
 use serde::de::{self, Visitor};
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub enum ChatColor {
     Black, DarkBlue, DarkGreen, DarkCyan, DarkRed, Purple, Gold,
     Gray, DarkGray, Blue, BrightGreen, Cyan, Red, Pink, Yellow,
     White, Obfuscated, Bold, Strikethrough, Underline, Italic, Reset
 }
 
-impl ChatColor {
-    pub fn from_string(value: &str) -> Option<Self> {
+impl FromStr for ChatColor {
+    type Err = &'static str;
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
         match value {
-            "black" => Some(ChatColor::Black),
-            "dark_blue" => Some(ChatColor::DarkBlue),
-            "dark_green" => Some(ChatColor::DarkGreen),
-            "dark_cyan" => Some(ChatColor::DarkCyan),
-            "dark_red" => Some(ChatColor::DarkRed),
-            "dark_purple" => Some(ChatColor::Purple),
-            "gold" => Some(ChatColor::Gold),
-            "gray" => Some(ChatColor::Gray),
-            "dark_gray" => Some(ChatColor::DarkGray),
-            "blue" => Some(ChatColor::Blue),
-            "green" => Some(ChatColor::BrightGreen),
-            "cyan" => Some(ChatColor::Cyan),
-            "red" => Some(ChatColor::Red),
-            "pink" => Some(ChatColor::Pink),
-            "yellow" => Some(ChatColor::Yellow),
-            "white" => Some(ChatColor::White),
-            "obfuscated" => Some(ChatColor::Obfuscated),
-            "bold" => Some(ChatColor::Bold),
-            "strikethrough" => Some(ChatColor::Strikethrough),
-            "underline" => Some(ChatColor::Underline),
-            "italic" => Some(ChatColor::Italic),
-            "reset" => Some(ChatColor::Reset),
-            _ => None
+            "black" => Ok(ChatColor::Black),
+            "dark_blue" => Ok(ChatColor::DarkBlue),
+            "dark_green" => Ok(ChatColor::DarkGreen),
+            "dark_cyan" => Ok(ChatColor::DarkCyan),
+            "dark_red" => Ok(ChatColor::DarkRed),
+            "dark_purple" => Ok(ChatColor::Purple),
+            "gold" => Ok(ChatColor::Gold),
+            "gray" => Ok(ChatColor::Gray),
+            "dark_gray" => Ok(ChatColor::DarkGray),
+            "blue" => Ok(ChatColor::Blue),
+            "green" => Ok(ChatColor::BrightGreen),
+            "cyan" => Ok(ChatColor::Cyan),
+            "red" => Ok(ChatColor::Red),
+            "pink" => Ok(ChatColor::Pink),
+            "yellow" => Ok(ChatColor::Yellow),
+            "white" => Ok(ChatColor::White),
+            "obfuscated" => Ok(ChatColor::Obfuscated),
+            "bold" => Ok(ChatColor::Bold),
+            "strikethrough" => Ok(ChatColor::Strikethrough),
+            "underline" => Ok(ChatColor::Underline),
+            "italic" => Ok(ChatColor::Italic),
+            "reset" => Ok(ChatColor::Reset),
+            _ => Err("Unknown ChatColor")
         }
     }
+}
 
-    pub fn get_code(&self) -> char {
-        match &self {
-            &ChatColor::Black => '0',
-            &ChatColor::DarkBlue => '1',
-            &ChatColor::DarkGreen => '2',
-            &ChatColor::DarkCyan => '3',
-            &ChatColor::DarkRed => '4',
-            &ChatColor::Purple => '5',
-            &ChatColor::Gold => '6',
-            &ChatColor::Gray => '7',
-            &ChatColor::DarkGray => '8',
-            &ChatColor::Blue => '9',
-            &ChatColor::BrightGreen => 'a',
-            &ChatColor::Cyan => 'b',
-            &ChatColor::Red => 'c',
-            &ChatColor::Pink => 'd',
-            &ChatColor::Yellow => 'e',
-            &ChatColor::White => 'f',
-            &ChatColor::Obfuscated => 'k',
-            &ChatColor::Bold => 'l',
-            &ChatColor::Strikethrough => 'm',
-            &ChatColor::Underline => 'n',
-            &ChatColor::Italic => 'o',
-            &ChatColor::Reset => 'r',
+impl ChatColor {
+    pub fn get_code(self) -> char {
+        match self {
+            ChatColor::Black => '0',
+            ChatColor::DarkBlue => '1',
+            ChatColor::DarkGreen => '2',
+            ChatColor::DarkCyan => '3',
+            ChatColor::DarkRed => '4',
+            ChatColor::Purple => '5',
+            ChatColor::Gold => '6',
+            ChatColor::Gray => '7',
+            ChatColor::DarkGray => '8',
+            ChatColor::Blue => '9',
+            ChatColor::BrightGreen => 'a',
+            ChatColor::Cyan => 'b',
+            ChatColor::Red => 'c',
+            ChatColor::Pink => 'd',
+            ChatColor::Yellow => 'e',
+            ChatColor::White => 'f',
+            ChatColor::Obfuscated => 'k',
+            ChatColor::Bold => 'l',
+            ChatColor::Strikethrough => 'm',
+            ChatColor::Underline => 'n',
+            ChatColor::Italic => 'o',
+            ChatColor::Reset => 'r',
         }   
     }
 
-    pub fn to_string(&self) -> &'static str {
-        match &self {
-            &ChatColor::Black => "black",
-            &ChatColor::DarkBlue => "dark_blue",
-            &ChatColor::DarkGreen => "dark_green",
-            &ChatColor::DarkCyan => "dark_cyan",
-            &ChatColor::DarkRed => "dark_red",
-            &ChatColor::Purple => "dark_purple",
-            &ChatColor::Gold => "gold",
-            &ChatColor::Gray => "gray",
-            &ChatColor::DarkGray => "dark_gray",
-            &ChatColor::Blue => "blue",
-            &ChatColor::BrightGreen => "green",
-            &ChatColor::Cyan => "cyan",
-            &ChatColor::Red => "red",
-            &ChatColor::Pink => "pink",
-            &ChatColor::Yellow => "yellow",
-            &ChatColor::White => "white",
-            &ChatColor::Obfuscated => "obfuscated",
-            &ChatColor::Bold => "bold",
-            &ChatColor::Strikethrough => "strikethrough",
-            &ChatColor::Underline => "underline",
-            &ChatColor::Italic => "italic",
-            &ChatColor::Reset => "reset",
+    pub fn to_str(self) -> &'static str {
+        match self {
+            ChatColor::Black => "black",
+            ChatColor::DarkBlue => "dark_blue",
+            ChatColor::DarkGreen => "dark_green",
+            ChatColor::DarkCyan => "dark_cyan",
+            ChatColor::DarkRed => "dark_red",
+            ChatColor::Purple => "dark_purple",
+            ChatColor::Gold => "gold",
+            ChatColor::Gray => "gray",
+            ChatColor::DarkGray => "dark_gray",
+            ChatColor::Blue => "blue",
+            ChatColor::BrightGreen => "green",
+            ChatColor::Cyan => "cyan",
+            ChatColor::Red => "red",
+            ChatColor::Pink => "pink",
+            ChatColor::Yellow => "yellow",
+            ChatColor::White => "white",
+            ChatColor::Obfuscated => "obfuscated",
+            ChatColor::Bold => "bold",
+            ChatColor::Strikethrough => "strikethrough",
+            ChatColor::Underline => "underline",
+            ChatColor::Italic => "italic",
+            ChatColor::Reset => "reset",
         }
     }
 }
@@ -96,7 +101,7 @@ impl ChatColor {
 impl Serialize for ChatColor {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> 
         where S: Serializer {
-        serializer.collect_str(self.to_string())
+        serializer.collect_str(self.to_str())
     }
 }
 
@@ -120,9 +125,9 @@ impl<'de> Visitor<'de> for ChatColorVisitor {
     where
         E: de::Error,
     {
-        match ChatColor::from_string(value) {
-            Some(color) => Ok(color),
-            None => Err(E::custom(format!("unknown color: {}", value)))
+        match ChatColor::from_str(value) {
+            Ok(color) => Ok(color),
+            Err(_) => Err(E::custom(format!("unknown color: {}", value)))
         }
     }
 }

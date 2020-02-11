@@ -22,10 +22,10 @@ impl HandshakePacket {
     }
 
     pub fn serialize(&self, buffer: &mut Buffer) -> io::Result<()> {
-        buffer.write_varint(&self.protocol)?;
+        buffer.write_varint(self.protocol)?;
         buffer.write_string(&self.address)?;
-        buffer.write_ushort(&self.port)?;
-        buffer.write_varint(&self.next)?;
+        buffer.write_ushort(self.port)?;
+        buffer.write_varint(self.next)?;
         Ok(())
     }
 }

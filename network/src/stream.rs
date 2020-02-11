@@ -52,11 +52,11 @@ impl Stream {
 
     pub fn send_packet(&mut self, packet: &ClientboundPacket) -> io::Result<()> {
         let mut out_buf = Buffer::new();
-        out_buf.write_varint(&packet.get_id())?;
+        out_buf.write_varint(packet.get_id())?;
         packet.serialize(&mut out_buf)?;
 
         let mut final_out_buf = Buffer::new();
-        final_out_buf.write_varint(&(out_buf.len() as i32))?;
+        final_out_buf.write_varint(out_buf.len() as i32)?;
         final_out_buf.extend(out_buf.as_raw());
 
         println!("{:?}", final_out_buf);

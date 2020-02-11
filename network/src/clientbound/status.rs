@@ -71,7 +71,7 @@ impl PongPacket {
     }
 
     pub fn serialize(&self, buffer: &mut Buffer) -> io::Result<()> {
-        buffer.write_long(&self.payload)?;
+        buffer.write_long(self.payload)?;
         Ok(())
     }
 }

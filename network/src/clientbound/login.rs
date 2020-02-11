@@ -67,9 +67,9 @@ impl EncryptionRequestPacket {
 
     pub fn serialize(&self, buffer: &mut Buffer) -> io::Result<()> {
         buffer.write_string(&self.server_id)?;
-        buffer.write_varint(&self.public_key_length)?;
+        buffer.write_varint(self.public_key_length)?;
         buffer.write_ubyte_array(&self.public_key)?;
-        buffer.write_varint(&self.verify_token_length)?;
+        buffer.write_varint(self.verify_token_length)?;
         buffer.write_ubyte_array(&self.verify_token)?;
         Ok(())
     }

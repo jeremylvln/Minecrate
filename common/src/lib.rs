@@ -5,3 +5,4 @@ pub mod dimension;
 pub mod gamemode;
 pub mod level_type;
 pub mod vector;
+pub mod utils;

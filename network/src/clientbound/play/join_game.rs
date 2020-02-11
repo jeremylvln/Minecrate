@@ -1,3 +1,4 @@
+use std::convert::TryFrom;
 use std::io;
 use common::gamemode::Gamemode;
 use common::dimension::Dimension;
@@ -51,12 +52,12 @@ impl JoinGamePacket {
             gamemode_byte ^= 0b00000100;
         }
 
-        let dimension = Dimension::from_i32(&buffer.read_int()?);
+        let dimension = Dimension::from(buffer.read_int()?);
         let hashed_seed = buffer.read_long()?;
         let max_players = buffer.read_ubyte()?;
 
-        match Gamemode::from_u8(&gamemode_byte) {
-            Some(gamemode) => {
+        match Gamemode::try_from(gamemode_byte) {
+            Ok(gamemode) => {
                 match LevelType::from_string(&buffer.read_string()?) {
                     Some(level_type) => {
                         Ok(ClientboundPacket::JoinGame(JoinGamePacket {
@@ -75,26 +76,26 @@ impl JoinGamePacket {
                     None => Err(io::Error::new(io::ErrorKind::InvalidData, "Unknown level type"))
                 }
             }
-            None => Err(io::Error::new(io::ErrorKind::InvalidData, "Unknown gamemode"))
+            Err(error) => Err(io::Error::new(io::ErrorKind::InvalidData, error))
         }
     }
 
     pub fn serialize(&self, buffer: &mut Buffer) -> io::Result<()> {
-        let mut final_gamemode = self.gamemode.to_u8();
+        let mut final_gamemode = u8::from(self.gamemode);
 
         if self.hardcore {
             final_gamemode |= 0b00000100;
         }
 
-        buffer.write_int(&self.entity_id)?;
-        buffer.write_ubyte(&final_gamemode)?;
-        buffer.write_int(&self.dimension.to_i32())?;
-        buffer.write_long(&self.hashed_seed)?;
-        buffer.write_ubyte(&self.max_players)?;
-        buffer.write_string(&self.level_type.to_string())?;
-        buffer.write_varint(&self.render_distance)?;
-        buffer.write_bool(&self.reduced_debug_info)?;
-        buffer.write_bool(&self.enable_respawn_screen)?;
+        buffer.write_int(self.entity_id)?;
+        buffer.write_ubyte(final_gamemode)?;
+        buffer.write_int(i32::from(self.dimension))?;
+        buffer.write_long(self.hashed_seed)?;
+        buffer.write_ubyte(self.max_players)?;
+        buffer.write_string(self.level_type.to_string())?;
+        buffer.write_varint(self.render_distance)?;
+        buffer.write_bool(self.reduced_debug_info)?;
+        buffer.write_bool(self.enable_respawn_screen)?;
         Ok(())
     }
 }

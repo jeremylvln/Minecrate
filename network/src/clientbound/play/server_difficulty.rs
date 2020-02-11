@@ -1,3 +1,4 @@
+use std::convert::TryFrom;
 use std::io;
 use common::difficulty::Difficulty;
 
@@ -19,20 +20,20 @@ impl ServerDifficultyPacket {
     }
 
     pub fn deserialize(buffer: &mut Buffer) -> io::Result<ClientboundPacket> {
-        match Difficulty::from_u8(&buffer.read_ubyte()?) {
-            Some(difficulty) => {
+        match Difficulty::try_from(buffer.read_ubyte()?) {
+            Ok(difficulty) => {
                 Ok(ClientboundPacket::ServerDifficulty(ServerDifficultyPacket {
                     difficulty,
                     locked: buffer.read_bool()?,
                 }))
             }
-            None => Err(io::Error::new(io::ErrorKind::InvalidData, "Unknown difficulty"))
+            Err(error) => Err(io::Error::new(io::ErrorKind::InvalidData, error))
         }
     }
 
     pub fn serialize(&self, buffer: &mut Buffer) -> io::Result<()> {
-        buffer.write_ubyte(&self.difficulty.to_u8())?;
-        buffer.write_bool(&self.locked)?;
+        buffer.write_ubyte(u8::from(self.difficulty))?;
+        buffer.write_bool(self.locked)?;
         Ok(())
     }
 }

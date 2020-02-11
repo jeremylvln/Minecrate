@@ -1,39 +1,28 @@
-use std::hash::{Hash, Hasher};
+use std::convert::From;
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, Eq, PartialEq, Clone, Copy, Hash)]
 pub enum Dimension {
     Overworld, Nether, End, Custom(i32)
 }
 
-impl Dimension {
-    pub fn from_i32(value: &i32) -> Self {
+impl From<Dimension> for i32 {
+    fn from(value: Dimension) -> i32 {
+        match value {
+            Dimension::Overworld => 0,
+            Dimension::Nether => -1,
+            Dimension::End => 1,
+            Dimension::Custom(ref x) => *x,
+        }
+    }
+}
+
+impl From<i32> for Dimension {
+    fn from(value: i32) -> Dimension {
         match value {
             0 => Dimension::Overworld,
             -1 => Dimension::Nether,
             1 => Dimension::End,
-            _ => Dimension::Custom(*value)
-        }
-    }
-
-    pub fn to_i32(&self) -> i32 {
-        match self {
-            &Dimension::Overworld => 0,
-            &Dimension::Nether => -1,
-            &Dimension::End => 1,
-            &Dimension::Custom(ref x) => *x,
+            _ => Dimension::Custom(value)
         }
     }
 }
-
-impl Hash for Dimension {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        match self {
-            &Dimension::Overworld => state.write_i32(0),
-            &Dimension::Nether => state.write_i32(-1),
-            &Dimension::End => state.write_i32(1),
-            &Dimension::Custom(ref x) => state.write_i32(*x),
-        }
-    }
-}
-
-impl Eq for Dimension {}

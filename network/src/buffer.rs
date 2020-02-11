@@ -64,8 +64,8 @@ impl Buffer {
     }
 
     #[allow(dead_code)]
-    pub fn write_bool(&mut self, value: &bool) -> io::Result<()> {
-        self.write_byte(if *value { &0x1 } else { &0x0 })
+    pub fn write_bool(&mut self, value: bool) -> io::Result<()> {
+        self.write_byte(if value { 0x1 } else { 0x0 })
     }
 
     #[allow(dead_code)]
@@ -77,8 +77,8 @@ impl Buffer {
     }
 
     #[allow(dead_code)]
-    pub fn write_byte(&mut self, value: &i8) -> io::Result<()> {
-        self.inner.write_i8(*value)?;
+    pub fn write_byte(&mut self, value: i8) -> io::Result<()> {
+        self.inner.write_i8(value)?;
         Ok(())
     }
 
@@ -91,8 +91,8 @@ impl Buffer {
     }
 
     #[allow(dead_code)]
-    pub fn write_ubyte(&mut self, value: &u8) -> io::Result<()> {
-        self.inner.write_u8(*value)?;
+    pub fn write_ubyte(&mut self, value: u8) -> io::Result<()> {
+        self.inner.write_u8(value)?;
         Ok(())
     }
 
@@ -105,8 +105,8 @@ impl Buffer {
     }
 
     #[allow(dead_code)]
-    pub fn write_short(&mut self, value: &i16) -> io::Result<()> {
-        self.inner.write_i16::<BigEndian>(*value)?;
+    pub fn write_short(&mut self, value: i16) -> io::Result<()> {
+        self.inner.write_i16::<BigEndian>(value)?;
         Ok(())
     }
 
@@ -119,8 +119,8 @@ impl Buffer {
     }
 
     #[allow(dead_code)]
-    pub fn write_ushort(&mut self, value: &u16) -> io::Result<()> {
-        self.inner.write_u16::<BigEndian>(*value)?;
+    pub fn write_ushort(&mut self, value: u16) -> io::Result<()> {
+        self.inner.write_u16::<BigEndian>(value)?;
         Ok(())
     }
 
@@ -133,8 +133,8 @@ impl Buffer {
     }
 
     #[allow(dead_code)]
-    pub fn write_int(&mut self, value: &i32) -> io::Result<()> {
-        self.inner.write_i32::<BigEndian>(*value)?;
+    pub fn write_int(&mut self, value: i32) -> io::Result<()> {
+        self.inner.write_i32::<BigEndian>(value)?;
         Ok(())
     }
 
@@ -147,8 +147,8 @@ impl Buffer {
     }
 
     #[allow(dead_code)]
-    pub fn write_uint(&mut self, value: &u16) -> io::Result<()> {
-        self.inner.write_u16::<BigEndian>(*value)?;
+    pub fn write_uint(&mut self, value: u16) -> io::Result<()> {
+        self.inner.write_u16::<BigEndian>(value)?;
         Ok(())
     }
 
@@ -161,8 +161,8 @@ impl Buffer {
     }
 
     #[allow(dead_code)]
-    pub fn write_long(&mut self, value: &i64) -> io::Result<()> {
-        self.inner.write_i64::<BigEndian>(*value)?;
+    pub fn write_long(&mut self, value: i64) -> io::Result<()> {
+        self.inner.write_i64::<BigEndian>(value)?;
         Ok(())
     }
 
@@ -175,8 +175,8 @@ impl Buffer {
     }
 
     #[allow(dead_code)]
-    pub fn write_ulong(&mut self, value: &u64) -> io::Result<()> {
-        self.inner.write_u64::<BigEndian>(*value)?;
+    pub fn write_ulong(&mut self, value: u64) -> io::Result<()> {
+        self.inner.write_u64::<BigEndian>(value)?;
         Ok(())
     }
 
@@ -189,8 +189,8 @@ impl Buffer {
     }
 
     #[allow(dead_code)]
-    pub fn write_float(&mut self, value: &f32) -> io::Result<()> {
-        self.inner.write_f32::<BigEndian>(*value)?;
+    pub fn write_float(&mut self, value: f32) -> io::Result<()> {
+        self.inner.write_f32::<BigEndian>(value)?;
         Ok(())
     }
 
@@ -203,8 +203,8 @@ impl Buffer {
     }
 
     #[allow(dead_code)]
-    pub fn write_double(&mut self, value: &f64) -> io::Result<()> {
-        self.inner.write_f64::<BigEndian>(*value)?;
+    pub fn write_double(&mut self, value: f64) -> io::Result<()> {
+        self.inner.write_f64::<BigEndian>(value)?;
         Ok(())
     }
 
@@ -233,7 +233,7 @@ impl Buffer {
 
     #[allow(dead_code)]
     pub fn write_string(&mut self, value: &str) -> io::Result<()> {
-        self.write_varint(&(value.len() as i32))?;
+        self.write_varint(value.len() as i32)?;
         self.inner.write_all(value.as_bytes())?;
         Ok(())
     }
@@ -260,11 +260,10 @@ impl Buffer {
     }
 
     #[allow(dead_code)]
-    pub fn write_varint(&mut self, value: &i32) -> io::Result<()> {
+    pub fn write_varint(&mut self, mut value: i32) -> io::Result<()> {
         let msb: u8 = 0b10000000;
         let mask: i32 = 0b01111111;
 
-        let mut value = *value;
         for _ in 0..5 {
             let tmp = (value & mask) as u8;
             value &= !mask;
@@ -303,11 +302,10 @@ impl Buffer {
     }
 
     #[allow(dead_code)]
-    pub fn write_varlong(&mut self, value: &i64) -> io::Result<()> {
+    pub fn write_varlong(&mut self, mut value: i64) -> io::Result<()> {
         let msb: u8 = 0b10000000;
         let mask: i64 = 0b01111111;
 
-        let mut value = *value;
         for _ in 0..10 {
             let tmp = (value & mask) as u8;
             value &= !mask;
@@ -370,7 +368,7 @@ impl Buffer {
             Err(io::Error::new(io::ErrorKind::InvalidData, "Z is out of range"))
         } else {
             let encoded = ((x & 0x3ffffff) << 38) | ((y & 0xfff) << 26) | (z & 0x3ffffff);
-            self.write_ulong(&encoded)
+            self.write_ulong(encoded)
         }
     }
 
@@ -414,8 +412,19 @@ impl Buffer {
     }
 
     #[allow(dead_code)]
-    pub fn write_byte_array<'a>(&mut self, vec: &'a Vec<i8>) -> io::Result<()> {
-        self.write_array(Buffer::write_byte, vec)
+    pub fn write_byte_array(&mut self, vec: &Vec<i8>) -> io::Result<()> {
+        // Create a Vec<u8> out of the backing of Vec<i8>
+        let temp_vec = unsafe {
+            // Safety: This is safe as long than temp_vec isn't used in a mutable way.
+            Vec::from_raw_parts(vec.as_ptr() as *mut u8, vec.len(), vec.capacity())
+        };
+
+        let result = self.write_ubyte_array(&temp_vec);
+
+        // Ensure that we leak the temporary object as we don't want it to detroy the real object
+        std::mem::forget(temp_vec);
+
+        result
     }
 
     #[allow(dead_code)]
@@ -425,7 +434,9 @@ impl Buffer {
 
     #[allow(dead_code)]
     pub fn write_ubyte_array<'a>(&mut self, vec: &'a Vec<u8>) -> io::Result<()> {
-        self.write_array(Buffer::write_ubyte, vec)
+        self.inner.extend(&vec[..]);
+
+        Ok(())
     }
 
     #[allow(dead_code)]
