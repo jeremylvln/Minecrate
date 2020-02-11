@@ -6,8 +6,8 @@ use std::fmt;
 use byteorder::{BigEndian, ReadBytesExt};
 use uuid::Uuid;
 
+use cgmath::Vector3;
 use common::chat::Chat;
-use common::vector::Vector3i;
 
 pub struct Buffer {
     inner: Vec<u8>,
@@ -313,7 +313,7 @@ impl Buffer {
     }
 
     #[allow(dead_code)]
-    pub fn read_position(&mut self) -> io::Result<Vector3i> {
+    pub fn read_position(&mut self) -> io::Result<Vector3<i32>> {
         let value = self.read_ulong()?;
         let mut x = (value >> 38) as i32;
         let mut y = ((value >> 26) & 0xfff) as i32;
@@ -328,27 +328,27 @@ impl Buffer {
         if z >= 1 << 25 {
             z -= 1 << 26;
         }
-        Ok(Vector3i::new(x, y, z))
+        Ok(Vector3::new(x, y, z))
     }
 
     #[allow(dead_code)]
-    pub fn write_position(&mut self, value: &Vector3i) -> io::Result<()> {
-        let x = if value.0 >= 0 {
-            value.0 as u64
+    pub fn write_position(&mut self, value: &Vector3<i32>) -> io::Result<()> {
+        let x = if value.x >= 0 {
+            value.x as u64
         } else {
-            (value.0 + (1 << 26)) as u64
+            (value.x + (1 << 26)) as u64
         };
 
-        let y = if value.1 >= 0 {
-            value.1 as u64
+        let y = if value.y >= 0 {
+            value.y as u64
         } else {
-            (value.1 + (1 << 12)) as u64
+            (value.y + (1 << 12)) as u64
         };
 
-        let z = if value.2 >= 0 {
-            value.2 as u64
+        let z = if value.z >= 0 {
+            value.z as u64
         } else {
-            (value.2 + (1 << 26)) as u64
+            (value.z + (1 << 26)) as u64
         };
 
         if x & (!0x3ffffff) != 0 {
