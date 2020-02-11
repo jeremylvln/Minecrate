@@ -29,8 +29,14 @@ fn main() {
         run_cpy.store(false, Ordering::SeqCst);
     }).expect("Failed to set interrupt handler");
 
+    let (host, port) = {
+        let server = server.borrow();
+
+        (server.config.host.clone(), server.config.port)
+    };
+
     connection.listen(
-        run.clone(), &server.borrow().config.host.clone(), server.borrow().config.port,
+        run, &host, port,
         || {
             server.borrow_mut().tick();
         },
