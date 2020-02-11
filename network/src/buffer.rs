@@ -3,7 +3,7 @@ use std::io::{Cursor, Write};
 use std::io;
 use std::ops::RangeBounds;
 use std::fmt;
-use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
+use byteorder::{BigEndian, ReadBytesExt};
 use uuid::Uuid;
 
 use common::chat::Chat;
@@ -78,8 +78,7 @@ impl Buffer {
 
     #[allow(dead_code)]
     pub fn write_byte(&mut self, value: i8) -> io::Result<()> {
-        self.inner.write_i8(value)?;
-        Ok(())
+        self.inner.write_all(&i8::to_be_bytes(value))
     }
 
     #[allow(dead_code)]
@@ -92,8 +91,7 @@ impl Buffer {
 
     #[allow(dead_code)]
     pub fn write_ubyte(&mut self, value: u8) -> io::Result<()> {
-        self.inner.write_u8(value)?;
-        Ok(())
+        self.inner.write_all(&u8::to_be_bytes(value))
     }
 
     #[allow(dead_code)]
@@ -106,8 +104,7 @@ impl Buffer {
 
     #[allow(dead_code)]
     pub fn write_short(&mut self, value: i16) -> io::Result<()> {
-        self.inner.write_i16::<BigEndian>(value)?;
-        Ok(())
+        self.inner.write_all(&i16::to_be_bytes(value))
     }
 
     #[allow(dead_code)]
@@ -120,8 +117,7 @@ impl Buffer {
 
     #[allow(dead_code)]
     pub fn write_ushort(&mut self, value: u16) -> io::Result<()> {
-        self.inner.write_u16::<BigEndian>(value)?;
-        Ok(())
+        self.inner.write_all(&u16::to_be_bytes(value))
     }
 
     #[allow(dead_code)]
@@ -134,8 +130,7 @@ impl Buffer {
 
     #[allow(dead_code)]
     pub fn write_int(&mut self, value: i32) -> io::Result<()> {
-        self.inner.write_i32::<BigEndian>(value)?;
-        Ok(())
+        self.inner.write_all(&i32::to_be_bytes(value))
     }
 
     #[allow(dead_code)]
@@ -147,9 +142,8 @@ impl Buffer {
     }
 
     #[allow(dead_code)]
-    pub fn write_uint(&mut self, value: u16) -> io::Result<()> {
-        self.inner.write_u16::<BigEndian>(value)?;
-        Ok(())
+    pub fn write_uint(&mut self, value: u32) -> io::Result<()> {
+        self.inner.write_all(&u32::to_be_bytes(value))
     }
 
     #[allow(dead_code)]
@@ -162,7 +156,7 @@ impl Buffer {
 
     #[allow(dead_code)]
     pub fn write_long(&mut self, value: i64) -> io::Result<()> {
-        self.inner.write_i64::<BigEndian>(value)?;
+        self.inner.write_all(&i64::to_be_bytes(value))?;
         Ok(())
     }
 
@@ -176,8 +170,7 @@ impl Buffer {
 
     #[allow(dead_code)]
     pub fn write_ulong(&mut self, value: u64) -> io::Result<()> {
-        self.inner.write_u64::<BigEndian>(value)?;
-        Ok(())
+        self.inner.write_all(&u64::to_be_bytes(value))
     }
 
     #[allow(dead_code)]
@@ -190,8 +183,7 @@ impl Buffer {
 
     #[allow(dead_code)]
     pub fn write_float(&mut self, value: f32) -> io::Result<()> {
-        self.inner.write_f32::<BigEndian>(value)?;
-        Ok(())
+        self.inner.write_all(&f32::to_be_bytes(value))
     }
 
     #[allow(dead_code)]
@@ -204,8 +196,7 @@ impl Buffer {
 
     #[allow(dead_code)]
     pub fn write_double(&mut self, value: f64) -> io::Result<()> {
-        self.inner.write_f64::<BigEndian>(value)?;
-        Ok(())
+        self.inner.write_all(&f64::to_be_bytes(value))
     }
 
     #[allow(dead_code)]
@@ -382,8 +373,7 @@ impl Buffer {
 
     #[allow(dead_code)]
     pub fn write_uuid(&mut self, value: &Uuid) -> io::Result<()> {
-        self.inner.write_u128::<BigEndian>(value.as_u128())?;
-        Ok(())
+        self.inner.write_all(&u128::to_be_bytes(value.as_u128()))
     }
 
     #[allow(dead_code)]
@@ -433,10 +423,8 @@ impl Buffer {
     }
 
     #[allow(dead_code)]
-    pub fn write_ubyte_array<'a>(&mut self, vec: &'a Vec<u8>) -> io::Result<()> {
-        self.inner.extend(&vec[..]);
-
-        Ok(())
+    pub fn write_ubyte_array(&mut self, vec: &Vec<u8>) -> io::Result<()> {
+        self.inner.write_all(&vec[..])
     }
 
     #[allow(dead_code)]
