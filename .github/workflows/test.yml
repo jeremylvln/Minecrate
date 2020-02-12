@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 jobs:
   test:
-    name: Test
+    name: test
     runs-on: ubuntu-latest
 
     steps:
@@ -29,7 +29,7 @@ jobs:
           command: test
 
   lint:
-    name: Lint
+    name: lint
     runs-on: ubuntu-latest
 
     steps:
