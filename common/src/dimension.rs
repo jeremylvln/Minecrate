@@ -2,7 +2,10 @@ use std::convert::From;
 
 #[derive(Debug, Eq, PartialEq, Clone, Copy, Hash)]
 pub enum Dimension {
-    Overworld, Nether, End, Custom(i32)
+    Overworld,
+    Nether,
+    End,
+    Custom(i32),
 }
 
 impl From<Dimension> for i32 {
@@ -22,7 +25,7 @@ impl From<i32> for Dimension {
             0 => Dimension::Overworld,
             -1 => Dimension::Nether,
             1 => Dimension::End,
-            _ => Dimension::Custom(value)
+            _ => Dimension::Custom(value),
         }
     }
 }

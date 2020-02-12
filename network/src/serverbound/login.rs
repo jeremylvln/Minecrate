@@ -1,7 +1,7 @@
 use std::io;
 
-use crate::serverbound::ServerboundPacket;
 use crate::buffer::Buffer;
+use crate::serverbound::ServerboundPacket;
 
 #[derive(Debug)]
 pub struct LoginStartPacket {
@@ -36,12 +36,14 @@ impl EncryptionResponsePacket {
         let verify_token_length = buffer.read_varint()?;
         let verify_token = buffer.read_ubyte_array(verify_token_length as usize)?;
 
-        Ok(ServerboundPacket::EncryptionResponse(EncryptionResponsePacket {
-            shared_secret_length,
-            shared_secret,
-            verify_token_length,
-            verify_token,
-        }))
+        Ok(ServerboundPacket::EncryptionResponse(
+            EncryptionResponsePacket {
+                shared_secret_length,
+                shared_secret,
+                verify_token_length,
+                verify_token,
+            },
+        ))
     }
 
     pub fn serialize(&self, buffer: &mut Buffer) -> io::Result<()> {

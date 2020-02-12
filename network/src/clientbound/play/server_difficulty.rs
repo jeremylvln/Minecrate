@@ -1,6 +1,6 @@
+use common::difficulty::Difficulty;
 use std::convert::TryFrom;
 use std::io;
-use common::difficulty::Difficulty;
 
 use crate::buffer::Buffer;
 use crate::clientbound::ClientboundPacket;
@@ -12,22 +12,20 @@ pub struct ServerDifficultyPacket {
 }
 
 impl ServerDifficultyPacket {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new(difficulty: Difficulty, locked: bool) -> ClientboundPacket {
-        ClientboundPacket::ServerDifficulty(ServerDifficultyPacket {
-            difficulty,
-            locked,
-        })
+        ClientboundPacket::ServerDifficulty(ServerDifficultyPacket { difficulty, locked })
     }
 
     pub fn deserialize(buffer: &mut Buffer) -> io::Result<ClientboundPacket> {
         match Difficulty::try_from(buffer.read_ubyte()?) {
-            Ok(difficulty) => {
-                Ok(ClientboundPacket::ServerDifficulty(ServerDifficultyPacket {
+            Ok(difficulty) => Ok(ClientboundPacket::ServerDifficulty(
+                ServerDifficultyPacket {
                     difficulty,
                     locked: buffer.read_bool()?,
-                }))
-            }
-            Err(error) => Err(io::Error::new(io::ErrorKind::InvalidData, error))
+                },
+            )),
+            Err(error) => Err(io::Error::new(io::ErrorKind::InvalidData, error)),
         }
     }
 

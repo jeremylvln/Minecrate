@@ -3,7 +3,10 @@ use std::convert::TryFrom;
 
 #[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub enum Gamemode {
-    Survival, Creative, Adventure, Spectator
+    Survival,
+    Creative,
+    Adventure,
+    Spectator,
 }
 
 impl From<Gamemode> for u8 {
@@ -26,7 +29,7 @@ impl TryFrom<u8> for Gamemode {
             1 => Ok(Gamemode::Creative),
             2 => Ok(Gamemode::Adventure),
             3 => Ok(Gamemode::Spectator),
-            _ => Err("Unknown Gamemode")
+            _ => Err("Unknown Gamemode"),
         }
     }
 }

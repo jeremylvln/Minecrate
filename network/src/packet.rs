@@ -4,7 +4,10 @@ use crate::buffer::Buffer;
 
 #[derive(Debug)]
 pub enum State {
-    Handshake, Play, Status, Login
+    Handshake,
+    Play,
+    Status,
+    Login,
 }
 
 pub trait Packet: Sized {

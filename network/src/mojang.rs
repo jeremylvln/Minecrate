@@ -1,10 +1,10 @@
-use std::fmt::Write;
-use std::io;
 use openssl::hash::{self, MessageDigest};
 use reqwest;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
+use std::fmt::Write;
+use std::io;
 
-const ENDPOINT: &'static str = "https://sessionserver.mojang.com/session/minecraft/hasJoined";
+const ENDPOINT: &str = "https://sessionserver.mojang.com/session/minecraft/hasJoined";
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Profile {
@@ -13,19 +13,29 @@ pub struct Profile {
 }
 
 pub fn has_joined(
-    username: &str, server_id: &[u8], shared_secret: &[u8], server_key: &[u8]
+    username: &str,
+    server_id: &[u8],
+    shared_secret: &[u8],
+    server_key: &[u8],
 ) -> io::Result<Profile> {
     let server_hash = create_server_hash(server_id, shared_secret, server_key);
-    let uri = format!("{}?username={}&serverId={}", ENDPOINT, username, server_hash);
-    let res = reqwest::blocking::get(&uri);
+    let uri = format!(
+        "{}?username={}&serverId={}",
+        ENDPOINT, username, server_hash
+    );
 
-    if let Err(_) = res {
-        Err(io::Error::new(io::ErrorKind::Other, "Failed to query profile"))
-    } else {
-        match serde_json::from_str::<Profile>(&res.unwrap().text().unwrap()) {
+    match reqwest::blocking::get(&uri) {
+        Ok(res) => match serde_json::from_str::<Profile>(&res.text().unwrap()) {
             Ok(profile) => Ok(profile),
-            Err(_) => Err(io::Error::new(io::ErrorKind::InvalidData, "Failed to parse profile"))
-        }
+            Err(_) => Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "Failed to parse profile",
+            )),
+        },
+        Err(_) => Err(io::Error::new(
+            io::ErrorKind::Other,
+            "Failed to query profile",
+        )),
     }
 }
 
@@ -68,7 +78,7 @@ fn sha1(data: &[u8]) -> String {
     for byte in &*digest {
         if *byte >= 16 {
             non_zero = true;
-        } else if non_zero == false && *byte > 0 {
+        } else if !non_zero && *byte > 0 {
             write!(&mut ret, "{:x}", byte).unwrap();
             non_zero = true;
             continue;

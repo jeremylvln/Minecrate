@@ -3,7 +3,10 @@ use std::convert::TryFrom;
 
 #[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub enum Difficulty {
-    Peaceful, Easy, Normal, Hard
+    Peaceful,
+    Easy,
+    Normal,
+    Hard,
 }
 
 impl From<Difficulty> for u8 {
@@ -26,7 +29,7 @@ impl TryFrom<u8> for Difficulty {
             1 => Ok(Difficulty::Easy),
             2 => Ok(Difficulty::Normal),
             3 => Ok(Difficulty::Hard),
-            _ => Err("Unknown Difficulty")
+            _ => Err("Unknown Difficulty"),
         }
     }
 }

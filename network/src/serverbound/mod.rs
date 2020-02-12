@@ -1,13 +1,14 @@
 use std::io;
 
 pub mod handshake;
-pub mod status;
 pub mod login;
+pub mod status;
 
 use crate::buffer::Buffer;
 use crate::packet::{Packet, State};
 
 #[derive(Debug)]
+#[allow(clippy::large_enum_variant)]
 pub enum ServerboundPacket {
     // Handshake
     Handshake(handshake::HandshakePacket),
@@ -32,24 +33,24 @@ impl Packet for ServerboundPacket {
             let packet_id = buffer.read_varint()?;
             let _payload_size = (packet_len as usize) - (buffer.cursor() - cursor_before);
 
-            match state {
-                &State::Handshake => match packet_id {
+            match *state {
+                State::Handshake => match packet_id {
                     0x0 => handshake::HandshakePacket::deserialize(buffer),
-                    _ => Err(io::Error::new(io::ErrorKind::Other, "Unknown packet id"))
+                    _ => Err(io::Error::new(io::ErrorKind::Other, "Unknown packet id")),
                 },
-                &State::Play => match packet_id {
-                    _ => Err(io::Error::new(io::ErrorKind::Other, "Unknown packet id"))
+                State::Play => match packet_id {
+                    _ => Err(io::Error::new(io::ErrorKind::Other, "Unknown packet id")),
                 },
-                &State::Status => match packet_id {
+                State::Status => match packet_id {
                     0x0 => status::StatusRequestPacket::deserialize(buffer),
                     0x1 => status::PingPacket::deserialize(buffer),
-                    _ => Err(io::Error::new(io::ErrorKind::Other, "Unknown packet id"))
+                    _ => Err(io::Error::new(io::ErrorKind::Other, "Unknown packet id")),
                 },
-                &State::Login => match packet_id {
+                State::Login => match packet_id {
                     0x0 => login::LoginStartPacket::deserialize(buffer),
                     0x1 => login::EncryptionResponsePacket::deserialize(buffer),
-                    _ => Err(io::Error::new(io::ErrorKind::Other, "Unknown packet id"))
-                }
+                    _ => Err(io::Error::new(io::ErrorKind::Other, "Unknown packet id")),
+                },
             }
         } else {
             Err(io::Error::from(io::ErrorKind::WouldBlock))
@@ -57,47 +58,47 @@ impl Packet for ServerboundPacket {
     }
 
     fn serialize(&self, buffer: &mut Buffer) -> io::Result<()> {
-        match self {
+        match *self {
             // Handsha;e
-            &ServerboundPacket::Handshake(ref x) => x.serialize(buffer),
+            ServerboundPacket::Handshake(ref x) => x.serialize(buffer),
 
             // Status
-            &ServerboundPacket::StatusRequest(ref x) => x.serialize(buffer),
-            &ServerboundPacket::Ping(ref x) => x.serialize(buffer),
+            ServerboundPacket::StatusRequest(ref x) => x.serialize(buffer),
+            ServerboundPacket::Ping(ref x) => x.serialize(buffer),
 
             // Login
-            &ServerboundPacket::LoginStart(ref x) => x.serialize(buffer),
-            &ServerboundPacket::EncryptionResponse(ref x) => x.serialize(buffer),
+            ServerboundPacket::LoginStart(ref x) => x.serialize(buffer),
+            ServerboundPacket::EncryptionResponse(ref x) => x.serialize(buffer),
         }
     }
 
     fn get_id(&self) -> i32 {
-        match self {
+        match *self {
             // Handshake
-            &ServerboundPacket::Handshake(_) => 0x0,
+            ServerboundPacket::Handshake(_) => 0x0,
 
             // Status
-            &ServerboundPacket::StatusRequest(_) => 0x0,
-            &ServerboundPacket::Ping(_) => 0x1,
+            ServerboundPacket::StatusRequest(_) => 0x0,
+            ServerboundPacket::Ping(_) => 0x1,
 
             // Login
-            &ServerboundPacket::LoginStart(_) => 0x0,
-            &ServerboundPacket::EncryptionResponse(_) => 0x1,
+            ServerboundPacket::LoginStart(_) => 0x0,
+            ServerboundPacket::EncryptionResponse(_) => 0x1,
         }
     }
 
     fn get_state(&self) -> State {
-        match self {
+        match *self {
             // Handshake
-            &ServerboundPacket::Handshake(_) => State::Handshake,
+            ServerboundPacket::Handshake(_) => State::Handshake,
 
             // Status
-            &ServerboundPacket::StatusRequest(_) => State::Status,
-            &ServerboundPacket::Ping(_) => State::Status,
+            ServerboundPacket::StatusRequest(_) => State::Status,
+            ServerboundPacket::Ping(_) => State::Status,
 
             // Login
-            &ServerboundPacket::LoginStart(_) => State::Login,
-            &ServerboundPacket::EncryptionResponse(_) => State::Login,
+            ServerboundPacket::LoginStart(_) => State::Login,
+            ServerboundPacket::EncryptionResponse(_) => State::Login,
         }
     }
 }

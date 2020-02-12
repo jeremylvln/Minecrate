@@ -12,14 +12,17 @@ impl<'a, 'b> ECSWorld<'a, 'b> {
 
         dispatcher.setup(&mut world);
 
-        Self {
-            world,
-            dispatcher,
-        }
+        Self { world, dispatcher }
     }
 
     pub fn tick(&mut self) {
         self.dispatcher.dispatch(&self.world);
         self.world.maintain();
+    }
+}
+
+impl<'a, 'b> Default for ECSWorld<'a, 'b> {
+    fn default() -> Self {
+        Self::new()
     }
 }

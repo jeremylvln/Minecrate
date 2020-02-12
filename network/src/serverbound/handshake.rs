@@ -1,7 +1,7 @@
 use std::io;
 
-use crate::serverbound::ServerboundPacket;
 use crate::buffer::Buffer;
+use crate::serverbound::ServerboundPacket;
 
 #[derive(Debug)]
 pub struct HandshakePacket {

@@ -1,14 +1,16 @@
-use std::io;
 use common::chat::Chat;
-use network::serverbound::ServerboundPacket;
 use network::clientbound;
 use network::connection::{PROTOCOL_NAME, PROTOCOL_VERSION};
+use network::serverbound::ServerboundPacket;
 use network::stream::Stream;
+use std::io;
 
 use crate::server::MinecraftServer;
 
 pub fn packet_process(
-    server: &mut MinecraftServer, stream: &mut Stream, packet: &ServerboundPacket
+    server: &mut MinecraftServer,
+    stream: &mut Stream,
+    packet: &ServerboundPacket,
 ) -> io::Result<()> {
     match packet {
         ServerboundPacket::StatusRequest(_) => {
@@ -29,12 +31,12 @@ pub fn packet_process(
 
             stream.send_packet(&res)?;
             Ok(())
-        },
+        }
         ServerboundPacket::Ping(ref x) => {
             let res = clientbound::status::PongPacket::new(x.payload);
             stream.send_packet(&res)?;
             Ok(())
-        },
-        _ => Ok(())
+        }
+        _ => Ok(()),
     }
 }

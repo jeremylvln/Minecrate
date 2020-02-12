@@ -1,6 +1,12 @@
 #[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub enum LevelType {
-    Default, Flat, LargeBiomes, Amplified, Customized, Buffet, Default1_1
+    Default,
+    Flat,
+    LargeBiomes,
+    Amplified,
+    Customized,
+    Buffet,
+    Default1_1,
 }
 
 impl LevelType {
@@ -13,7 +19,7 @@ impl LevelType {
             "customized" => Some(LevelType::Customized),
             "buffet" => Some(LevelType::Buffet),
             "default_1_1" => Some(LevelType::Default1_1),
-            _ => None
+            _ => None,
         }
     }
 

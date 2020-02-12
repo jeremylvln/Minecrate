@@ -1,8 +1,8 @@
+use common::dimension::Dimension;
+use common::gamemode::Gamemode;
+use common::level_type::LevelType;
 use std::convert::TryFrom;
 use std::io;
-use common::gamemode::Gamemode;
-use common::dimension::Dimension;
-use common::level_type::LevelType;
 
 use crate::buffer::Buffer;
 use crate::clientbound::ClientboundPacket;
@@ -22,10 +22,17 @@ pub struct JoinGamePacket {
 }
 
 impl JoinGamePacket {
+    #[allow(clippy::new_ret_no_self, clippy::too_many_arguments)]
     pub fn new(
-        entity_id: i32, gamemode: Gamemode, hardcore: bool,
-        dimension: Dimension, hashed_seed: i64, max_players: u8,
-        level_type: LevelType, render_distance: i32, reduced_debug_info: bool,
+        entity_id: i32,
+        gamemode: Gamemode,
+        hardcore: bool,
+        dimension: Dimension,
+        hashed_seed: i64,
+        max_players: u8,
+        level_type: LevelType,
+        render_distance: i32,
+        reduced_debug_info: bool,
         enable_respawn_screen: bool,
     ) -> ClientboundPacket {
         ClientboundPacket::JoinGame(JoinGamePacket {
@@ -47,9 +54,9 @@ impl JoinGamePacket {
         let mut gamemode_byte = buffer.read_ubyte()?;
         let mut hardcore = false;
 
-        if gamemode_byte & (1 << 3) == 1 {
+        if gamemode_byte & 0b0000_0100 != 0 {
             hardcore = true;
-            gamemode_byte ^= 0b00000100;
+            gamemode_byte ^= 0b0000_0100;
         }
 
         let dimension = Dimension::from(buffer.read_int()?);
@@ -57,26 +64,25 @@ impl JoinGamePacket {
         let max_players = buffer.read_ubyte()?;
 
         match Gamemode::try_from(gamemode_byte) {
-            Ok(gamemode) => {
-                match LevelType::from_string(&buffer.read_string()?) {
-                    Some(level_type) => {
-                        Ok(ClientboundPacket::JoinGame(JoinGamePacket {
-                            entity_id,
-                            gamemode,
-                            hardcore,
-                            dimension,
-                            hashed_seed,
-                            max_players,
-                            level_type,
-                            render_distance: buffer.read_varint()?,
-                            reduced_debug_info: buffer.read_bool()?,
-                            enable_respawn_screen: buffer.read_bool()?,
-                        }))
-                    },
-                    None => Err(io::Error::new(io::ErrorKind::InvalidData, "Unknown level type"))
-                }
-            }
-            Err(error) => Err(io::Error::new(io::ErrorKind::InvalidData, error))
+            Ok(gamemode) => match LevelType::from_string(&buffer.read_string()?) {
+                Some(level_type) => Ok(ClientboundPacket::JoinGame(JoinGamePacket {
+                    entity_id,
+                    gamemode,
+                    hardcore,
+                    dimension,
+                    hashed_seed,
+                    max_players,
+                    level_type,
+                    render_distance: buffer.read_varint()?,
+                    reduced_debug_info: buffer.read_bool()?,
+                    enable_respawn_screen: buffer.read_bool()?,
+                })),
+                None => Err(io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    "Unknown level type",
+                )),
+            },
+            Err(error) => Err(io::Error::new(io::ErrorKind::InvalidData, error)),
         }
     }
 
@@ -84,7 +90,7 @@ impl JoinGamePacket {
         let mut final_gamemode = u8::from(self.gamemode);
 
         if self.hardcore {
-            final_gamemode |= 0b00000100;
+            final_gamemode |= 0b0000_0100;
         }
 
         buffer.write_int(self.entity_id)?;

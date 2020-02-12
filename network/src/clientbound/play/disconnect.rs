@@ -1,8 +1,8 @@
-use std::io;
 use common::chat::Chat;
+use std::io;
 
-use crate::clientbound::ClientboundPacket;
 use crate::buffer::Buffer;
+use crate::clientbound::ClientboundPacket;
 
 #[derive(Debug)]
 pub struct DisconnectPlayPacket {
@@ -10,10 +10,9 @@ pub struct DisconnectPlayPacket {
 }
 
 impl DisconnectPlayPacket {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new(reason: Chat) -> ClientboundPacket {
-        ClientboundPacket::DisconnectPlay(DisconnectPlayPacket {
-            reason,
-        })
+        ClientboundPacket::DisconnectPlay(DisconnectPlayPacket { reason })
     }
 
     pub fn deserialize(buffer: &mut Buffer) -> io::Result<ClientboundPacket> {

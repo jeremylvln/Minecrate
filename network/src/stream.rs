@@ -1,14 +1,14 @@
-use std::net::TcpStream;
-use std::io;
-use std::io::{Read, Write};
+use openssl::symm;
 use rand::thread_rng;
 use rand::Rng;
-use openssl::symm;
+use std::io;
+use std::io::{Read, Write};
+use std::net::TcpStream;
 
 use crate::buffer::Buffer;
-use crate::packet::{State, Packet};
-use crate::serverbound::ServerboundPacket;
 use crate::clientbound::ClientboundPacket;
+use crate::packet::{Packet, State};
+use crate::serverbound::ServerboundPacket;
 
 pub struct Stream {
     handle: TcpStream,
@@ -36,14 +36,14 @@ impl Stream {
 
     pub fn read_packet(&mut self) -> io::Result<ServerboundPacket> {
         self.read()?;
-        if self.buf.len() > 0 {
+        if !self.buf.is_empty() {
             self.buf.reset_cursor();
             match ServerboundPacket::deserialize(&mut self.buf, &self.state) {
                 Ok(packet) => {
                     self.buf.drain(0..self.buf.cursor());
                     Ok(packet)
-                },
-                Err(e) => Err(e)
+                }
+                Err(e) => Err(e),
             }
         } else {
             Err(io::Error::from(io::ErrorKind::WouldBlock))
@@ -66,8 +66,8 @@ impl Stream {
                 let mut tmp = vec![0; final_out_buf.len() + 16];
                 let n = cipher.update(&final_out_buf.as_raw(), &mut tmp)?;
                 self.handle.write_all(&tmp[..n])?
-            },
-            None => self.handle.write_all(&final_out_buf.as_raw())?
+            }
+            None => self.handle.write_all(&final_out_buf.as_raw())?,
         };
 
         Ok(())
@@ -94,15 +94,25 @@ impl Stream {
     }
 
     pub fn set_encryption_key(&mut self, key: &[u8]) {
-        self.in_cipher = Some(symm::Crypter::new(
-            symm::Cipher::aes_128_cfb8(), symm::Mode::Decrypt,
-            key, Some(key)
-        ).expect("Failed to create decryption cipher"));
+        self.in_cipher = Some(
+            symm::Crypter::new(
+                symm::Cipher::aes_128_cfb8(),
+                symm::Mode::Decrypt,
+                key,
+                Some(key),
+            )
+            .expect("Failed to create decryption cipher"),
+        );
 
-        self.out_cipher = Some(symm::Crypter::new(
-            symm::Cipher::aes_128_cfb8(), symm::Mode::Encrypt,
-            key, Some(key)
-        ).expect("Failed to create encryption cipher"));
+        self.out_cipher = Some(
+            symm::Crypter::new(
+                symm::Cipher::aes_128_cfb8(),
+                symm::Mode::Encrypt,
+                key,
+                Some(key),
+            )
+            .expect("Failed to create encryption cipher"),
+        );
     }
 
     fn read(&mut self) -> io::Result<()> {
@@ -111,10 +121,10 @@ impl Stream {
             Ok(count) if count > 0 => {
                 self.buf.extend(&tmp[..count]);
                 Ok(())
-            },
+            }
             Ok(_) => Ok(()),
             Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => Ok(()),
-            Err(e) => Err(e)
+            Err(e) => Err(e),
         }
     }
 }

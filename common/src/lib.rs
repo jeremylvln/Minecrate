@@ -1,5 +1,5 @@
-pub mod chat_color;
 pub mod chat;
+pub mod chat_color;
 pub mod difficulty;
 pub mod dimension;
 pub mod gamemode;

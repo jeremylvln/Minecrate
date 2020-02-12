@@ -14,7 +14,7 @@ impl World {
         Self {
             dimension,
             level_type,
-            chunk: Chunk {}
+            chunk: Chunk {},
         }
     }
 }

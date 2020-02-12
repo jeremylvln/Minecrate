@@ -1,13 +1,32 @@
+use serde::de::{self, Visitor};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt;
 use std::str::FromStr;
-use serde::{Serialize, Serializer, Deserialize, Deserializer};
-use serde::de::{self, Visitor};
 
 #[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub enum ChatColor {
-    Black, DarkBlue, DarkGreen, DarkCyan, DarkRed, Purple, Gold,
-    Gray, DarkGray, Blue, BrightGreen, Cyan, Red, Pink, Yellow,
-    White, Obfuscated, Bold, Strikethrough, Underline, Italic, Reset
+    Black,
+    DarkBlue,
+    DarkGreen,
+    DarkCyan,
+    DarkRed,
+    Purple,
+    Gold,
+    Gray,
+    DarkGray,
+    Blue,
+    BrightGreen,
+    Cyan,
+    Red,
+    Pink,
+    Yellow,
+    White,
+    Obfuscated,
+    Bold,
+    Strikethrough,
+    Underline,
+    Italic,
+    Reset,
 }
 
 impl FromStr for ChatColor {
@@ -37,7 +56,7 @@ impl FromStr for ChatColor {
             "underline" => Ok(ChatColor::Underline),
             "italic" => Ok(ChatColor::Italic),
             "reset" => Ok(ChatColor::Reset),
-            _ => Err("Unknown ChatColor")
+            _ => Err("Unknown ChatColor"),
         }
     }
 }
@@ -67,7 +86,7 @@ impl ChatColor {
             ChatColor::Underline => 'n',
             ChatColor::Italic => 'o',
             ChatColor::Reset => 'r',
-        }   
+        }
     }
 
     pub fn to_str(self) -> &'static str {
@@ -99,15 +118,19 @@ impl ChatColor {
 }
 
 impl Serialize for ChatColor {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> 
-        where S: Serializer {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
         serializer.collect_str(self.to_str())
     }
 }
 
 impl<'de> Deserialize<'de> for ChatColor {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> 
-        where D: Deserializer<'de> {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
         deserializer.deserialize_string(ChatColorVisitor)
     }
 }
@@ -127,7 +150,7 @@ impl<'de> Visitor<'de> for ChatColorVisitor {
     {
         match ChatColor::from_str(value) {
             Ok(color) => Ok(color),
-            Err(_) => Err(E::custom(format!("unknown color: {}", value)))
+            Err(_) => Err(E::custom(format!("unknown color: {}", value))),
         }
     }
 }

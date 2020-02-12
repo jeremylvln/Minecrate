@@ -10,6 +10,7 @@ pub struct PluginMessagePacket {
 }
 
 impl PluginMessagePacket {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new(channel: &str, data: &[u8]) -> ClientboundPacket {
         ClientboundPacket::PluginMessage(PluginMessagePacket {
             channel: channel.to_string(),

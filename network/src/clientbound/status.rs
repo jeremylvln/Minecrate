@@ -1,10 +1,10 @@
-use std::io;
-use serde::{Serialize, Deserialize};
-use serde_json;
 use common::chat::Chat;
+use serde::{Deserialize, Serialize};
+use serde_json;
+use std::io;
 
-use crate::clientbound::ClientboundPacket;
 use crate::buffer::Buffer;
+use crate::clientbound::ClientboundPacket;
 use crate::mojang;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -34,10 +34,9 @@ pub struct StatusResponsePacket {
 }
 
 impl StatusResponsePacket {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new(payload: StatusResponsePayload) -> ClientboundPacket {
-        ClientboundPacket::StatusResponse(StatusResponsePacket {
-            payload,
-        })
+        ClientboundPacket::StatusResponse(StatusResponsePacket { payload })
     }
 
     pub fn deserialize(buffer: &mut Buffer) -> io::Result<ClientboundPacket> {
@@ -58,10 +57,9 @@ pub struct PongPacket {
 }
 
 impl PongPacket {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new(payload: i64) -> ClientboundPacket {
-        ClientboundPacket::Pong(PongPacket {
-            payload,
-        })
+        ClientboundPacket::Pong(PongPacket { payload })
     }
 
     pub fn deserialize(buffer: &mut Buffer) -> io::Result<ClientboundPacket> {

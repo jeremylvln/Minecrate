@@ -1,21 +1,37 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use serde_json;
 
 use crate::chat_color::ChatColor;
 
-fn def_false() -> bool { false }
-fn def_none<T>() -> Option<T> { None }
-fn skip_false(value: &bool) -> bool { *value == false }
-fn skip_none<T>(value: &Option<T>) -> bool { value.is_none() }
+fn def_false() -> bool {
+    false
+}
+
+fn def_none<T>() -> Option<T> {
+    None
+}
+
+#[allow(clippy::trivially_copy_pass_by_ref)]
+fn skip_false(value: &bool) -> bool {
+    !(*value)
+}
+
+fn skip_none<T>(value: &Option<T>) -> bool {
+    value.is_none()
+}
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum ChatMessageType {
-    Chat, System, GameInfo,
+    Chat,
+    System,
+    GameInfo,
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum ChatSetting {
-    Full, System, None,
+    Full,
+    System,
+    None,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]

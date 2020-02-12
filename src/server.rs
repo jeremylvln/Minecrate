@@ -1,7 +1,7 @@
-use std::collections::HashMap;
-use common::dimension::Dimension;
 use common::difficulty::Difficulty;
+use common::dimension::Dimension;
 use entity::ECSWorld;
+use std::collections::HashMap;
 use world::world::World;
 
 use crate::config::Config;
@@ -25,7 +25,5 @@ impl<'a, 'b> MinecraftServer<'a, 'b> {
         }
     }
 
-    pub fn tick(&mut self) {
-
-    }
+    pub fn tick(&mut self) {}
 }

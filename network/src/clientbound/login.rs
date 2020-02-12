@@ -1,9 +1,9 @@
+use common::chat::Chat;
 use std::io;
 use uuid::Uuid;
-use common::chat::Chat;
 
-use crate::clientbound::ClientboundPacket;
 use crate::buffer::Buffer;
+use crate::clientbound::ClientboundPacket;
 
 #[derive(Debug)]
 pub struct DisconnectPacket {
@@ -11,10 +11,9 @@ pub struct DisconnectPacket {
 }
 
 impl DisconnectPacket {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new(reason: Chat) -> ClientboundPacket {
-        ClientboundPacket::Disconnect(DisconnectPacket {
-            reason,
-        })
+        ClientboundPacket::Disconnect(DisconnectPacket { reason })
     }
 
     pub fn deserialize(buffer: &mut Buffer) -> io::Result<ClientboundPacket> {
@@ -39,6 +38,7 @@ pub struct EncryptionRequestPacket {
 }
 
 impl EncryptionRequestPacket {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new(server_id: &str, public_key: &[u8], verify_token: &[u8]) -> ClientboundPacket {
         ClientboundPacket::EncryptionRequest(EncryptionRequestPacket {
             server_id: server_id.to_string(),
@@ -56,13 +56,15 @@ impl EncryptionRequestPacket {
         let verify_token_length = buffer.read_varint()?;
         let verify_token = buffer.read_ubyte_array(verify_token_length as usize)?;
 
-        Ok(ClientboundPacket::EncryptionRequest(EncryptionRequestPacket {
-            server_id,
-            public_key_length,
-            public_key,
-            verify_token_length,
-            verify_token,
-        }))
+        Ok(ClientboundPacket::EncryptionRequest(
+            EncryptionRequestPacket {
+                server_id,
+                public_key_length,
+                public_key,
+                verify_token_length,
+                verify_token,
+            },
+        ))
     }
 
     pub fn serialize(&self, buffer: &mut Buffer) -> io::Result<()> {
@@ -82,6 +84,7 @@ pub struct LoginSuccessPacket {
 }
 
 impl LoginSuccessPacket {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new(uuid: Uuid, username: &str) -> ClientboundPacket {
         ClientboundPacket::LoginSuccess(LoginSuccessPacket {
             uuid,
@@ -95,12 +98,16 @@ impl LoginSuccessPacket {
                 uuid,
                 username: buffer.read_string()?,
             })),
-            Err(e) => Err(io::Error::new(io::ErrorKind::InvalidData, e))
+            Err(e) => Err(io::Error::new(io::ErrorKind::InvalidData, e)),
         }
     }
 
     pub fn serialize(&self, buffer: &mut Buffer) -> io::Result<()> {
-        buffer.write_string(self.uuid.to_hyphenated().encode_lower(&mut Uuid::encode_buffer()))?;
+        buffer.write_string(
+            self.uuid
+                .to_hyphenated()
+                .encode_lower(&mut Uuid::encode_buffer()),
+        )?;
         buffer.write_string(&self.username)?;
         Ok(())
     }
